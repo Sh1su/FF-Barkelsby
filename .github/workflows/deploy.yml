@@ -1,0 +1,244 @@
+# CI/CD-Pipeline für das Nuxt-Projekt.
+#
+# CI (läuft bei jedem Push und jedem Pull Request auf main):
+#   verify             -> prüft Lint, Typecheck, Unit-/API-/Komponenten-Tests, Lückenprüfung
+#                          (= exakt `npm run verify`, siehe package.json)
+#   e2e                -> Playwright End-to-End- und Visual-Tests gegen einen echten Produktionsbuild
+#   docker-build-push   -> baut erst, wenn verify UND e2e grün sind, das Docker-Image
+#                          (Dockerfile im Repo-Root), startet es als echten Container und
+#                          prüft /api/health. Nur bei Push auf main wird das getestete
+#                          Image danach zusätzlich nach ghcr.io (GitHub Container Registry)
+#                          gepusht – bei Pull Requests wird nur gebaut, nicht gepusht.
+#
+# CD (läuft nur bei Push auf main, nicht bei Pull Requests):
+#   deploy -> Platzhalter für den Rollout des eben gepushten Images auf dem Zielserver
+#             (siehe Kommentare dort)
+#
+# "verify" und "e2e" heißen bewusst so, weil docs/git-workflow.md genau diese beiden
+# Namen als Pflicht-Status-Checks für den main-Branch-Schutz vorsieht.
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Manueller Start über "Run workflow" im GitHub-Browser-UI (Tab "Actions").
+  workflow_dispatch: {}
+
+# Minimalrechte für den GITHUB_TOKEN – einzelne Jobs/Steps können bei Bedarf mehr anfordern.
+permissions:
+  contents: read
+
+# Verhindert, dass zwei Läufe auf demselben Branch/PR gleichzeitig laufen bzw. deployen.
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # -------------------------------------------------------------------------------------
+  # CI: Lint, Typecheck, Unit-/API-/Komponenten-Tests, Lückenprüfung.
+  # -------------------------------------------------------------------------------------
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten (inkl. npm-Cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # 'npm' cached ~/.npm anhand des Hashes von package-lock.json. Nutzt ihr
+          # pnpm/yarn statt npm: hier 'pnpm' bzw. 'yarn' eintragen und "npm ci" weiter
+          # unten durch "pnpm install --frozen-lockfile" bzw. "yarn install --frozen-lockfile"
+          # ersetzen (gilt für alle Jobs in dieser Datei).
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Lint + Typecheck + Tests + Lückenprüfung
+        # Entspricht exakt "npm run verify" aus package.json. Unit-, API- und
+        # Komponenten-Tests setzen ihre Test-Umgebung selbst (tests/setup-env.ts) –
+        # keine Secrets nötig.
+        run: npm run verify
+
+  # -------------------------------------------------------------------------------------
+  # CI: End-to-End- und Visual-Tests gegen einen echten Produktionsbuild.
+  # -------------------------------------------------------------------------------------
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten (inkl. npm-Cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Playwright-Browser installieren
+        # Nur Chromium, weil playwright.config.ts aktuell ausschließlich das Projekt
+        # "desktop" (Desktop Chrome) definiert. Kommt ein weiteres Browser-Projekt dazu,
+        # hier entsprechend erweitern oder "npx playwright install --with-deps" ohne
+        # Browser-Namen für alle konfigurierten Browser nutzen.
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E- und Visual-Tests
+        # playwright.config.ts startet den Server selbst (npx nuxt build && nuxt preview)
+        # und setzt eigene Test-Umgebungsvariablen samt eigener SQLite-Datei – keine
+        # Secrets nötig. Hinweis: Falls die Visual-Snapshots ursprünglich lokal (nicht
+        # unter Linux/ubuntu-latest) erzeugt wurden, können sie hier abweichen – dann
+        # Baselines unter CI-Bedingungen neu erzeugen.
+        run: npm run test:e2e
+
+      - name: Playwright-Report bei Fehlschlag hochladen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # -------------------------------------------------------------------------------------
+  # CD: baut das Docker-Image erst, wenn verify UND e2e grün sind (Dockerfile im
+  # Repo-Root), testet es als echten Container per Health-Check und pusht es erst danach
+  # – nur bei Push auf main – nach ghcr.io. Bei Pull Requests wird nur gebaut/getestet,
+  # damit kaputte Dockerfile-Änderungen schon im Review auffallen.
+  # -------------------------------------------------------------------------------------
+  docker-build-push:
+    name: docker-build-push
+    needs: [verify, e2e]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # nötig, um mit dem eingebauten GITHUB_TOKEN nach ghcr.io zu pushen
+    outputs:
+      image-tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Docker Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      - name: Image-Tags/Labels erzeugen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # ghcr.io verlangt kleingeschriebene Namen – diese Action lowercased automatisch.
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Image bauen (noch nicht pushen)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # Multi-Stage-Dockerfile im Repo-Root (docs/docker-deployment.md). Falls der
+          # Build selbst Build-Args braucht (z. B. eine öffentliche API-URL fürs
+          # Prerendering), hier mit `build-args:` ergänzen.
+          push: false
+          load: true # lädt das Image in den lokalen Docker-Daemon des Runners, für den Health-Check unten
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # -----------------------------------------------------------------------------
+      # FUNKTIONSTEST: startet genau das eben gebaute Image als echten Container
+      # (inkl. dessen eigenem Dockerfile-HEALTHCHECK) und prüft /api/health von außen.
+      # Schlägt das fehl (kein `continue-on-error`), bricht der Job ab – es wird NICHTS
+      # nach ghcr.io gepusht.
+      #
+      # NUXT_SESSION_PASSWORD ist hier bewusst ein Wegwerf-Wert nur für diesen Testlauf
+      # (server/plugins/bootstrap.ts bricht sonst schon beim Start ab) – niemals ein
+      # echtes Produktions-Secret hierfür verwenden.
+      # -----------------------------------------------------------------------------
+      - name: Funktionstest (Health-Check im Container)
+        run: |
+          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          docker run -d --name ci-health-test -p 3000:3000 \
+            -e NUXT_SESSION_PASSWORD=ci-only-dummy-secret-mindestens-32-zeichen-lang \
+            "$IMAGE_TAG"
+
+          echo "Warte auf Container-Start und prüfe /api/health..."
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:3000/api/health; then
+              echo "Health-Check erfolgreich."
+              docker rm -f ci-health-test
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "::error::Health-Check fehlgeschlagen – Container antwortet nicht wie erwartet. Es wird nichts gepusht."
+          docker logs ci-health-test || true
+          docker rm -f ci-health-test || true
+          exit 1
+
+      - name: Bei GitHub Container Registry anmelden
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          # GITHUB_TOKEN reicht aus (kein eigenes Secret nötig), solange "packages: write"
+          # oben gesetzt ist.
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Getestetes Image nach ghcr.io pushen
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # Pusht exakt das oben gebaute und per Health-Check geprüfte lokale Image
+        # (docker push statt erneutem build-push-action-Aufruf, damit sicher kein
+        # zweiter, potenziell abweichender Build gepusht wird).
+        run: |
+          echo "${{ steps.meta.outputs.tags }}" | while IFS= read -r tag; do
+            [ -n "$tag" ] && docker push "$tag"
+          done
+
+  # -------------------------------------------------------------------------------------
+  # CD: nur bei Push auf main (nicht bei Pull Requests) – Rollout des eben getesteten
+  # und gepushten Images auf dem Zielserver.
+  # -------------------------------------------------------------------------------------
+  deploy:
+    name: deploy
+    needs: [docker-build-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Optional: unter Settings -> Environments ein "production"-Environment mit
+    # Required Reviewers / Wartezeit anlegen, dann pausiert dieser Job bis zur
+    # manuellen Freigabe. Ohne Konfiguration hat das keinen Effekt.
+    environment: production
+    steps:
+      # ---------------------------------------------------------------------------------
+      # PLATZHALTER: Rollout auf dem Zielserver.
+      #
+      # Das Image liegt jetzt fertig getestet unter den obigen Tags in ghcr.io
+      # (${{ needs.docker-build-push.outputs.image-tags }}). Üblicher nächster Schritt
+      # laut docs/docker-deployment.md, Abschnitt "Update-Ablauf": per SSH auf den
+      # Zielserver verbinden und dort
+      #   docker compose pull && docker compose up -d
+      # ausführen (Migrationen laufen beim Start automatisch, siehe server/plugins/bootstrap.ts).
+      # Dafür braucht ihr zusätzliche Secrets, z. B. SSH_HOST, SSH_USER, SSH_PRIVATE_KEY,
+      # und einen Schritt wie appleboy/ssh-action.
+      #
+      # Ist das ghcr.io-Package privat, muss sich der Zielserver einmalig mit einem
+      # Personal Access Token (Scope read:packages) per `docker login ghcr.io` anmelden,
+      # bevor `docker compose pull` funktioniert.
+      # ---------------------------------------------------------------------------------
+      - name: Rollout-Routine (Platzhalter – hier anpassen)
+        env:
+          IMAGE_TAGS: ${{ needs.docker-build-push.outputs.image-tags }}
+        run: |
+          echo "Getestetes Image bereit zum Rollout:"
+          echo "$IMAGE_TAGS"
+          echo "TODO: SSH-Verbindung zum Zielserver + 'docker compose pull && docker compose up -d' ergänzen."
