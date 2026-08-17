@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "description": "Lehrgangsverwaltung Freiwillige Feuerwehr",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",

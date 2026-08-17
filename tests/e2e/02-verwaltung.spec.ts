@@ -32,9 +32,17 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
 
     await expect(page.getByTestId('course-calendar')).toBeVisible()
 
-    // Klick auf einen konkreten Tag öffnet die Schnellanlage mit diesem Datum.
+    // Klick auf einen konkreten Tag öffnet die Schnellanlage mit diesem Datum. Das
+    // Kalenderraster zeigt volle Wochen um den aktuellen Monat (buildMonthGrid, siehe
+    // app/utils/calendar.ts) – je nach Testlauf-Datum kann "heute + 21 Tage" knapp
+    // außerhalb dieses Rasters liegen (Monatsgrenze). Dann wie ein echter Nutzer so oft
+    // "Nächster Monat" klicken, bis der Zieltag sichtbar ist.
     const tag = isoInDays(21)
-    await page.getByTestId(`calendar-day-${tag}`).click()
+    const dayCell = page.getByTestId(`calendar-day-${tag}`)
+    for (let attempt = 0; attempt < 2 && !(await dayCell.isVisible()); attempt++) {
+      await page.getByTestId('calendar-next').click()
+    }
+    await dayCell.click()
 
     await expect(page.getByTestId('course-create-form')).toBeVisible()
     await expect(page.getByTestId('course-start-input')).toHaveValue(tag)
