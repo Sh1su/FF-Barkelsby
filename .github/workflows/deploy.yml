@@ -49,7 +49,7 @@ jobs:
       - name: Node.js einrichten (inkl. npm-Cache)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           # 'npm' cached ~/.npm anhand des Hashes von package-lock.json. Nutzt ihr
           # pnpm/yarn statt npm: hier 'pnpm' bzw. 'yarn' eintragen und "npm ci" weiter
           # unten durch "pnpm install --frozen-lockfile" bzw. "yarn install --frozen-lockfile"
@@ -78,7 +78,7 @@ jobs:
       - name: Node.js einrichten (inkl. npm-Cache)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Abhängigkeiten installieren
