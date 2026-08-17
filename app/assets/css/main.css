@@ -1,0 +1,77 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+/* Schrift lokal aus node_modules – kein Abruf von Google Fonts (Offline-Betrieb + DSGVO). */
+@import '@fontsource/ibm-plex-sans/latin-400.css';
+@import '@fontsource/ibm-plex-sans/latin-500.css';
+@import '@fontsource/ibm-plex-sans/latin-600.css';
+@import '@fontsource/ibm-plex-sans/latin-700.css';
+
+/* Design-Tokens aus Fortbildungsverwaltung.dc.html */
+@theme static {
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* Feuerwehr-Rot #C1121F als Primaerfarbe */
+  --color-fire-50: #fef2f3;
+  --color-fire-100: #fde3e5;
+  --color-fire-200: #fbccd0;
+  --color-fire-300: #f7a5ac;
+  --color-fire-400: #f0737f;
+  --color-fire-500: #e34455;
+  --color-fire-600: #c1121f;
+  --color-fire-700: #a5121d;
+  --color-fire-800: #88131d;
+  --color-fire-900: #74151e;
+  --color-fire-950: #40060c;
+
+  /* Navy #131C2C fuer Kopfbereiche und generierte Titelbilder */
+  --color-navy-50: #f4f6f8;
+  --color-navy-100: #e5e9ef;
+  --color-navy-200: #cbd4df;
+  --color-navy-300: #a3b3c6;
+  --color-navy-400: #748ca7;
+  --color-navy-500: #546e8c;
+  --color-navy-600: #425775;
+  --color-navy-700: #37475f;
+  --color-navy-800: #2e3c50;
+  --color-navy-900: #1e2a3d;
+  --color-navy-950: #131c2c;
+}
+
+:root {
+  /* Sagt dem Browser, in welcher Helligkeit er native Bedienelemente zeichnen soll –
+     betrifft Datumsfelder, deren Kalender-Popup, Zahlenpfeile und Bildlaufleisten. */
+  color-scheme: light;
+
+  /* Nuxt UI nimmt --ui-radius als Basiseinheit und multipliziert sie:
+     sm = 1x, md = 1.5x, lg = 2x, xl = 3x. 0.375rem ergibt 6 / 9 / 12 / 18px.
+     Der Entwurf nutzt 9-12px fuer Knoepfe und 12px fuer Karten; Filterchips und
+     Badges sind dort bewusst Pillen (border-radius: 999px). */
+  --ui-radius: 0.375rem;
+
+  /* Nuxt UI nimmt fuer die Primaerfarbe standardmaessig die 500er-Stufe – das Design
+     verlangt aber das dunklere Feuerwehr-Rot #C1121F (fire-600). */
+  --ui-primary: var(--color-fire-600);
+}
+
+/* Seitenhintergrund je Farbmodus: hell wie im Entwurf (#F6F7F9), dunkel das Navy des
+   Titelbereichs. Flaechen darauf nutzen `bg-default` und heben sich in beiden Modi ab. */
+body {
+  background: var(--color-navy-50);
+  color: var(--ui-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background: var(--color-navy-950);
+}
+
+/* Fokusring aus dem Design */
+:focus-visible {
+  outline: 3px solid #93b4f5;
+  outline-offset: 2px;
+}

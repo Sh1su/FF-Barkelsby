@@ -1,0 +1,81 @@
+# Fortbildungsverwaltung - Produktions-Stack
+# Start:  docker compose up -d --build
+# Diese Datei gehört im Repository nach ./docker-compose.yml (Pfade ggf. anpassen).
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fortbildungsverwaltung:${APP_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:?bitte in .env setzen}
+      NUXT_DATABASE_PATH: /data/app.db
+      NUXT_UPLOAD_DIR: /data/uploads
+      NUXT_BACKUP_MARKER: /backups/last-success   # /api/health meldet degraded, wenn zu alt
+      NUXT_PUBLIC_APP_URL: ${NUXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NUXT_SMTP_HOST: ${NUXT_SMTP_HOST:-}
+      NUXT_SMTP_USER: ${NUXT_SMTP_USER:-}
+      NUXT_SMTP_PASSWORD: ${NUXT_SMTP_PASSWORD:-}
+      TZ: Europe/Berlin
+    volumes:
+      - app-data:/data
+      - backups:/backups:ro      # nur lesend: die App meldet den Backup-Status, schreibt aber nicht
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  # Ebene 1 der Backup-Strategie: taegliches Vollbackup 02:30 Uhr + GFS-Rotation
+  backup:
+    build:
+      context: ./ops
+      dockerfile: backup/Dockerfile
+    image: fortbildungsverwaltung-backup:${APP_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      DB_PATH: /data/app.db
+      UPLOAD_DIR: /data/uploads
+      BACKUP_DIR: /backups
+      KEEP_DAILY: 7
+      KEEP_WEEKLY: 4
+      KEEP_MONTHLY: 6
+      AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}   # leer = unverschluesselt (nur lokal akzeptabel)
+      TZ: Europe/Berlin
+    volumes:
+      - app-data:/data           # schreibend, damit pre-migration-Snapshots aufgeraeumt werden koennen
+      - backups:/backups
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  # Ebene 2 (optional, empfohlen ab Produktivbetrieb): kontinuierliche WAL-Replikation
+  # Aktivieren mit:  docker compose --profile replication up -d
+  litestream:
+    image: litestream/litestream:0.3
+    profiles: ["replication"]
+    restart: unless-stopped
+    command: replicate -config /etc/litestream.yml
+    volumes:
+      - app-data:/data
+      - ./ops/litestream.yml:/etc/litestream.yml:ro
+      - replica:/replica          # besser: NAS-Mount oder S3/MinIO ausserhalb des Hosts
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  app-data:
+  backups:
+  replica:

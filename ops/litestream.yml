@@ -1,0 +1,15 @@
+# Kontinuierliche Replikation der SQLite-Datenbank (RPO ~10 Sekunden).
+# Voraussetzung: die App laeuft im WAL-Modus (siehe .claude/rules/database.md).
+dbs:
+  - path: /data/app.db
+    replicas:
+      # Lokales Ziel - fuer echten Schutz auf ein zweites System zeigen lassen (NAS/S3/MinIO).
+      - type: file
+        path: /replica/app.db
+        retention: 168h          # 7 Tage Point-in-Time-Restore
+        sync-interval: 10s
+        snapshot-interval: 24h
+
+# Restore auf einen Zeitpunkt:
+#   litestream restore -config /etc/litestream.yml \
+#     -timestamp 2026-08-10T14:00:00Z -o /data/app.db /data/app.db
