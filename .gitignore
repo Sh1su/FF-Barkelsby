@@ -13,3 +13,8 @@ backups/
 test-results/
 playwright-report/
 coverage/
+
+# Von ops/scripts/setup-deploy.sh am Repo-Root generierte Deploy-Artefakte (pro Server
+# unterschiedlich) - Vorlage bleibt ops/docker-compose.yml.
+/docker-compose.yml
+/Caddyfile
