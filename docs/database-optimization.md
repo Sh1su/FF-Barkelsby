@@ -11,7 +11,7 @@ import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from '../database/schema'
 
-const sqlite = new Database(process.env.NUXT_DATABASE_PATH ?? '/data/app.db')
+const sqlite = new Database(process.env.NUXT_DB_PATH ?? '/data/app.db')
 
 sqlite.pragma('journal_mode = WAL')    // Leser blockieren den Schreiber nicht mehr
 sqlite.pragma('foreign_keys = ON')     // Fremdschlüssel werden sonst NICHT erzwungen

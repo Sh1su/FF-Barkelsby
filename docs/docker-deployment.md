@@ -14,6 +14,11 @@ Nur dieses Verzeichnis wird ins finale Image kopiert.
 
 FROM node:22-alpine AS build
 WORKDIR /app
+# better-sqlite3 hat kein vorgebautes Binary fuer musl (Alpine) - node-gyp kompiliert es
+# beim "npm ci" aus dem Quellcode und braucht dafuer python3/make/g++ (build-base).
+# Diese Pakete landen nicht im finalen Image, nur .output + das fertig kompilierte Modul
+# werden in den Runtime-Stage unten kopiert.
+RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
@@ -24,13 +29,17 @@ WORKDIR /app
 ENV NODE_ENV=production \
     NITRO_PORT=3000 \
     NITRO_HOST=0.0.0.0 \
-    NUXT_DATABASE_PATH=/data/app.db \
+    NUXT_DB_PATH=/data/app.db \
     NUXT_UPLOAD_DIR=/data/uploads
 
-# better-sqlite3 ist ein natives Modul: Prebuild wird aus dem Build-Stage übernommen
+# better-sqlite3 ist ein natives Modul: Prebuild wird aus dem Build-Stage übernommen,
+# statt es im Runtime-Image neu zu kompilieren.
+#
+# Kein separates COPY für Migrationen nötig: server/plugins/bootstrap.ts liest sie über
+# Nitros Server-Assets (useStorage('assets:server')), die beim Build bereits fest in
+# .output/server eingebettet werden (siehe server/assets/migrations/).
 COPY --from=build /app/.output ./.output
 COPY --from=build /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
-COPY --from=build /app/server/database/migrations ./migrations
 
 RUN apk add --no-cache sqlite tini \
  && mkdir -p /data/uploads \
@@ -47,8 +56,17 @@ CMD ["node", ".output/server/index.mjs"]
 ```
 
 Hinweis zu `better-sqlite3`: das Modul wird beim Install für die Zielplattform kompiliert. Build- und
-Runtime-Image müssen daher dieselbe Basis (hier `node:22-alpine`) und Architektur verwenden. Alternativ
-`@libsql/client` verwenden, das ohne nativen Build-Schritt auskommt.
+Runtime-Image müssen daher dieselbe Basis (hier `node:22-alpine`) und Architektur verwenden. Alpine nutzt
+musl statt glibc, dafür gibt es kein vorgebautes Binary – `node-gyp` kompiliert deshalb aus dem
+Quellcode und braucht `python3`/`make`/`g++` im Build-Stage (siehe oben). Alternativ `@libsql/client`
+verwenden, das ohne nativen Build-Schritt auskommt.
+
+Wichtig beim ersten Start des Containers: `bootstrap.ts` prüft `NUXT_ADMIN_EMAIL`, `NUXT_ADMIN_PASSWORD`,
+`NUXT_GUEST_EMAIL` und `NUXT_GUEST_PASSWORD` **vor** den Migrationen. Fehlen sie, wirft
+`readSeedEnv()` eine unbehandelte Ablehnung, *bevor* die Migrationen laufen – der Server startet trotzdem
+und `/api/health` meldet weiterhin `ok` (der Check prüft nur `select 1`, das auch auf einer unmigrierten
+Datenbank funktioniert). Ein Health-Check allein erkennt diesen Fall also nicht; in den Container-Logs
+steht dann `[unhandledRejection] ... Fehlende Umgebungsvariablen: ...`.
 
 ## `.dockerignore`
 
@@ -85,7 +103,7 @@ services:
       - "3000:3000"
     environment:
       NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:?bitte in .env setzen}
-      NUXT_DATABASE_PATH: /data/app.db
+      NUXT_DB_PATH: /data/app.db
       NUXT_UPLOAD_DIR: /data/uploads
       NUXT_PUBLIC_APP_URL: ${NUXT_PUBLIC_APP_URL:-http://localhost:3000}
       NUXT_SMTP_HOST: ${NUXT_SMTP_HOST:-}
@@ -133,15 +151,22 @@ Datenbank ist gefährlicher als ein Neustart-Loop.
 # 1. Session-Secret erzeugen (min. 32 Zeichen)
 echo "NUXT_SESSION_PASSWORD=$(openssl rand -base64 32)" >> .env
 
-# 2. Starten
+# 2. Zugangsdaten fuer Erst-Admin und Gast-Zugang setzen (Pflicht, siehe
+#    "Umgebungsvariablen" unten) - ohne diese vier bricht das Seeding vor den
+#    Migrationen ab, siehe Hinweis oben unter "Dockerfile (Multi-Stage)"
+cat >> .env <<'EOF'
+NUXT_ADMIN_EMAIL=wehrfuehrung@beispiel.example
+NUXT_ADMIN_PASSWORD=bitte-aendern
+NUXT_GUEST_EMAIL=gast@beispiel.example
+NUXT_GUEST_PASSWORD=bitte-aendern
+EOF
+
+# 3. Starten - Migrationen und Konten-Seeding laufen automatisch beim ersten
+#    Start (server/plugins/bootstrap.ts), kein separater CLI-Aufruf noetig
 docker compose up -d --build
 
-# 3. Logs prüfen
+# 4. Logs pruefen - bei Erfolg steht dort {"level":"info","msg":"bootstrap",...}
 docker compose logs -f app
-
-# 4. Admin-Benutzer anlegen (idempotenter Seed)
-docker compose exec app node .output/server/index.mjs --seed
-#    alternativ: dedizierter One-Shot-Service im Compose
 ```
 
 ## Zugangsdaten im Betrieb ändern (FV-12)
@@ -187,7 +212,11 @@ ohnehin – der Zugriff auf das Volume ist die eigentliche Schutzgrenze, nicht d
 | Variable | Pflicht | Beschreibung |
 |----------|---------|--------------|
 | `NUXT_SESSION_PASSWORD` | ja | Secret zum Versiegeln des Session-Cookies, min. 32 Zeichen |
-| `NUXT_DATABASE_PATH` | ja | Pfad zur SQLite-Datei, muss im Volume liegen (`/data/app.db`) |
+| `NUXT_ADMIN_EMAIL` | ja | E-Mail des Erst-Admins (FV-1) – ohne bricht das Seeding vor den Migrationen ab |
+| `NUXT_ADMIN_PASSWORD` | ja | Startpasswort des Erst-Admins (Wechsel beim ersten Anmelden erzwungen) |
+| `NUXT_GUEST_EMAIL` | ja | Kennung des Gast-Zugangs |
+| `NUXT_GUEST_PASSWORD` | ja | Startpasswort des Gast-Zugangs |
+| `NUXT_DB_PATH` | ja | Pfad zur SQLite-Datei, muss im Volume liegen (`/data/app.db`) |
 | `NUXT_UPLOAD_DIR` | ja | Verzeichnis für Nachweise (`/data/uploads`) |
 | `NUXT_PUBLIC_APP_URL` | ja | Öffentliche Basis-URL (für Links in E-Mails) |
 | `NUXT_SMTP_*` | nein | SMTP-Zugang für Benachrichtigungen (FV-8) |

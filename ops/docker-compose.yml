@@ -13,7 +13,15 @@ services:
       - "3000:3000"
     environment:
       NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:?bitte in .env setzen}
-      NUXT_DATABASE_PATH: /data/app.db
+      # Pflicht fuer den Erst-Start (server/plugins/bootstrap.ts, FV-1): ohne diese vier
+      # Werte bricht das Seeding vor den Migrationen ab - der Container laeuft zwar
+      # weiter und /api/health meldet trotzdem "ok" (siehe Hinweis in
+      # docs/docker-deployment.md), aber es existiert keine migrierte Datenbank.
+      NUXT_ADMIN_EMAIL: ${NUXT_ADMIN_EMAIL:?bitte in .env setzen}
+      NUXT_ADMIN_PASSWORD: ${NUXT_ADMIN_PASSWORD:?bitte in .env setzen}
+      NUXT_GUEST_EMAIL: ${NUXT_GUEST_EMAIL:?bitte in .env setzen}
+      NUXT_GUEST_PASSWORD: ${NUXT_GUEST_PASSWORD:?bitte in .env setzen}
+      NUXT_DB_PATH: /data/app.db
       NUXT_UPLOAD_DIR: /data/uploads
       NUXT_BACKUP_MARKER: /backups/last-success   # /api/health meldet degraded, wenn zu alt
       NUXT_PUBLIC_APP_URL: ${NUXT_PUBLIC_APP_URL:-http://localhost:3000}
