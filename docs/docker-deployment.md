@@ -227,7 +227,9 @@ Jede neue Variable gehört in `.env.example` **und** in diese Tabelle.
 
 ## Reverse Proxy & TLS
 
-Der Container spricht HTTP. TLS terminiert davor, z. B. mit Caddy:
+Der Container spricht HTTP. TLS terminiert davor mit Caddy – automatisches Let's-Encrypt-Zertifikat,
+kein separates certbot nötig. `ops/scripts/setup-deploy.sh` erzeugt Caddyfile und `docker-compose.yml`
+dafür automatisch (siehe "Deploy einrichten" unten); von Hand sähe die Caddyfile so aus:
 
 ```
 fortbildung.intern.example.org {
@@ -235,8 +237,33 @@ fortbildung.intern.example.org {
 }
 ```
 
-Der Proxy muss `X-Forwarded-For` und `X-Forwarded-Proto` setzen (wichtig für Rate Limiting und
-sichere Cookies) und vom Client mitgeschickte Werte überschreiben.
+Caddy setzt `X-Forwarded-For`/`X-Forwarded-Proto` selbst korrekt (wichtig für Rate Limiting und sichere
+Cookies) und überschreibt vom Client mitgeschickte Werte. Der `app`-Service selbst ist dabei nicht nach
+außen erreichbar (kein `ports:`, nur `expose:`) – einzig Caddy hört auf 80/443, deshalb kann ein Client
+diese Header beim `app`-Service gar nicht direkt spoofen.
+
+## Deploy einrichten (Zielserver)
+
+`ops/scripts/setup-deploy.sh` erzeugt `.env`, `Caddyfile` und `docker-compose.yml` im Repo-Root für
+einen produktiven Deploy, der das fertig gebaute Image aus der GitHub Container Registry zieht (gebaut
+in `.github/workflows/deploy.yml`) statt lokal zu bauen:
+
+```bash
+./ops/scripts/setup-deploy.sh --domain fortbildung.wehr.example
+# fragt interaktiv nach Admin-/Gast-Zugangsdaten und SMTP (optional), generiert
+# NUXT_SESSION_PASSWORD und Startpasswörter automatisch
+
+docker compose pull && docker compose up -d
+docker compose logs -f caddy   # bestätigt den Let's-Encrypt-Bezug
+```
+
+Voraussetzung: Die Domain muss per DNS (A/AAAA) bereits auf den Server zeigen, Port 80 und 443 müssen
+aus dem Internet erreichbar sein (Let's-Encrypt-Challenge). Ist das ghcr.io-Package privat, vorher
+`docker login ghcr.io` mit einem Personal Access Token (Scope `read:packages`) ausführen.
+
+`--yes` überspringt alle Rückfragen (nicht gesetzte Werte bleiben leer bzw. werden generiert), `--force`
+überschreibt bereits vorhandene `.env`/`Caddyfile`/`docker-compose.yml` (vorher sichern). Details:
+`./ops/scripts/setup-deploy.sh --help`.
 
 ## Backup & Restore
 
