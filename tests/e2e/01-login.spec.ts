@@ -67,6 +67,10 @@ test.describe.serial('FV-1 Fundament & Login-Gate', () => {
 
   test('AC-11: ein Gast kommt nicht in die Verwaltung', async ({ page }) => {
     await login(page, GUEST.email, GUEST.neu)
+    // Erst die Anmeldung abwarten (Klick loest sie nur an) - sonst kann das folgende
+    // page.goto() die noch laufende Anmeldung ueberholen und faellt faelschlich auf
+    // /login zurueck, weil das Session-Cookie noch nicht gesetzt ist.
+    await expect(page).not.toHaveURL(/\/login/)
     await page.goto('/verwaltung')
 
     await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:\d+\/$/)
