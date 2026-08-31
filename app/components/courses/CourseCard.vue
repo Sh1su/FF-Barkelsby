@@ -5,17 +5,17 @@ interface CourseCardData {
   summary: string | null
   startsOn: string | number | Date
   endsOn: string | number | Date
-  capacity: number
   confirmedCount: number
-  fullyBooked: boolean
+  signupOpen: boolean
   status: 'geplant' | 'abgesagt'
 }
 
 const props = defineProps<{ course: CourseCardData }>()
 
-const { dateRange, dayBadge, seatsLabel } = useCourseFormat()
+const { dateRange, dayBadge } = useCourseFormat()
 const badge = computed(() => dayBadge(props.course.startsOn))
 const cancelled = computed(() => props.course.status === 'abgesagt')
+const geschlossen = computed(() => !cancelled.value && !props.course.signupOpen)
 </script>
 
 <template>
@@ -61,11 +61,11 @@ const cancelled = computed(() => props.course.status === 'abgesagt')
           <dt class="sr-only">Zeitraum</dt>
           <dd>{{ dateRange(course.startsOn, course.endsOn) }}</dd>
         </div>
-        <div class="flex items-center gap-2">
+        <div v-if="course.confirmedCount > 0" class="flex items-center gap-2">
           <UIcon name="i-lucide-users" class="size-4 shrink-0 text-dimmed" />
-          <dt class="sr-only">Belegung</dt>
-          <dd data-testid="course-seats">
-            {{ seatsLabel(course.capacity, course.confirmedCount) }}
+          <dt class="sr-only">Anmeldungen</dt>
+          <dd data-testid="course-signups">
+            {{ course.confirmedCount }} {{ course.confirmedCount === 1 ? 'Anmeldung' : 'Anmeldungen' }} bestätigt
           </dd>
         </div>
       </dl>
@@ -80,12 +80,12 @@ const cancelled = computed(() => props.course.status === 'abgesagt')
           Abgesagt
         </UBadge>
         <UBadge
-          v-else-if="course.fullyBooked"
-          color="warning"
+          v-else-if="geschlossen"
+          color="neutral"
           variant="subtle"
-          data-testid="course-full-badge"
+          data-testid="course-closed-badge"
         >
-          Ausgebucht
+          Anmeldung geschlossen
         </UBadge>
 
         <UButton

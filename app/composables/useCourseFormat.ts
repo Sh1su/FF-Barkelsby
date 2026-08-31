@@ -34,9 +34,5 @@ export function useCourseFormat() {
     return days <= 1 ? 'Ein Tag' : `${days} Tage`
   }
 
-  function seatsLabel(capacity: number, confirmedCount: number): string {
-    return `${confirmedCount} von ${capacity} Plätzen belegt`
-  }
-
-  return { dateRange, dayBadge, durationLabel, seatsLabel, fullDate }
+  return { dateRange, dayBadge, durationLabel, fullDate }
 }

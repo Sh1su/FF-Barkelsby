@@ -28,14 +28,6 @@ export function canTransition(from: CourseStatus, to: CourseStatus): boolean {
   return COURSE_TRANSITIONS[from].includes(to)
 }
 
-export function countConfirmedSignups(courseId: string): number {
-  return useDatabase()
-    .select({ value: count() })
-    .from(signups)
-    .where(and(eq(signups.courseId, courseId), eq(signups.status, 'bestaetigt')))
-    .get()?.value ?? 0
-}
-
 export function countSignups(courseId: string): number {
   return useDatabase()
     .select({ value: count() })
@@ -67,7 +59,6 @@ export function listCoursesInRange(from?: string, to?: string) {
       title: courses.title,
       startsOn: courses.startsOn,
       endsOn: courses.endsOn,
-      capacity: courses.capacity,
       status: courses.status,
       updatedAt: courses.updatedAt,
     })
@@ -87,7 +78,6 @@ export function createCourse(input: CreateCourseInput) {
       title: input.title,
       startsOn: parseDate(input.startsOn),
       endsOn: parseDate(input.endsOn),
-      capacity: input.capacity,
       motif: input.motif ?? null,
       palette: input.palette ?? null,
     })
@@ -121,17 +111,6 @@ export async function updateCourse(id: string, input: UpdateCourseInput) {
     })
   }
 
-  // Kapazitaet nie unter die bereits bestaetigten Anmeldungen (FV-3, AC-14).
-  if (typeof input.capacity === 'number') {
-    const confirmed = countConfirmedSignups(id)
-    if (input.capacity < confirmed) {
-      throw createError({
-        statusCode: 422,
-        statusMessage: `Es sind bereits ${confirmed} Anmeldungen bestätigt – die Platzzahl kann nicht darunter liegen.`,
-      })
-    }
-  }
-
   db.transaction((tx) => {
     tx.update(courses)
       .set({
@@ -141,7 +120,6 @@ export async function updateCourse(id: string, input: UpdateCourseInput) {
         topics: input.topics ?? existing.topics,
         startsOn,
         endsOn,
-        capacity: input.capacity ?? existing.capacity,
         motif: input.motif === undefined ? existing.motif : input.motif,
         palette: input.palette === undefined ? existing.palette : input.palette,
         updatedAt: new Date(),

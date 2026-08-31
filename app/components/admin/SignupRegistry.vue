@@ -151,16 +151,6 @@ async function setzeStatus(id: string, ziel: SignupStatus) {
               <UBadge :color="STATUSFARBEN[eintrag.status]" variant="subtle" size="sm">
                 {{ SIGNUP_STATUS_LABELS[eintrag.status] }}
               </UBadge>
-              <UBadge
-                v-if="eintrag.ueberKapazitaet"
-                color="warning"
-                variant="outline"
-                size="sm"
-                class="ml-1"
-                data-testid="registry-over-capacity"
-              >
-                über Kapazität
-              </UBadge>
             </td>
             <td class="px-4 py-3">
               <div class="flex justify-end gap-2">

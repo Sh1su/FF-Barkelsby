@@ -59,7 +59,6 @@ test.describe.serial('FV-2 Lehrgangskatalog – Layout', () => {
           title: titel,
           startsOn: iso,
           endsOn: iso,
-          capacity: 10,
         },
       })
       expect(response.status(), await response.text()).toBe(201)

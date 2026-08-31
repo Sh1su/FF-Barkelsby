@@ -4,6 +4,7 @@ import type { CreateSignupInput } from '../../shared/validation/signup'
 import { courses, mailLog, signups } from '../database/schema'
 import { TEMPLATES } from '../../shared/mail-templates'
 import { formatRange } from './mail.service'
+import { isSignupOpen } from './course.service'
 
 /**
  * Interessensbekundung ohne persoenliches Konto (FV-5).
@@ -37,6 +38,14 @@ export async function createSignup(courseId: string, input: CreateSignupInput) {
     throw createError({
       statusCode: 422,
       statusMessage: 'Dieser Lehrgang wurde abgesagt und nimmt keine Anmeldungen mehr an.',
+    })
+  }
+
+  // Es gibt keine Platzzahl - Anmeldungen sind offen, bis der Lehrgang beginnt (FV-14, AC-4).
+  if (!isSignupOpen(course.status, course.startsOn)) {
+    throw createError({
+      statusCode: 422,
+      statusMessage: 'Dieser Lehrgang hat bereits begonnen und nimmt keine Anmeldungen mehr an.',
     })
   }
 

@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { fetch } from '@nuxt/test-utils/e2e'
 import { startTestServer } from '../helpers/server'
 import { signIn } from '../helpers/session'
-import { createCourse } from '../factories/course'
+import { createCourse, isoInDays } from '../factories/course'
 import { insertSignup } from '../factories/signup'
 
 await startTestServer('signups')
@@ -105,12 +105,9 @@ describe('FV-5 Interessensbekundung', () => {
     expect((await anmelden(course.id)).status).toBe(201)
   })
 
-  it('AC-5: auch ein ausgebuchter Lehrgang nimmt Interesse an', async () => {
-    const course = await createCourse(adminCookie, { capacity: 1 })
+  it('FV-14, AC-1: es gibt keine Platzzahl – beliebig viele Interessenten können sich anmelden', async () => {
+    const course = await createCourse(adminCookie)
     insertSignup(DB, course.id, 'bestaetigt', 'platz1@test.local')
-
-    const vorher = await detail(course.id)
-    expect(vorher.fullyBooked).toBe(true)
 
     expect((await anmelden(course.id)).status).toBe(201)
   })
@@ -126,6 +123,35 @@ describe('FV-5 Interessensbekundung', () => {
     const response = await anmelden(course.id)
     expect(response.status).toBe(422)
     expect((await response.json()).statusMessage).toContain('abgesagt')
+  })
+
+  it('FV-14, AC-4: ein bereits begonnener Lehrgang nimmt keine Anmeldung mehr an', async () => {
+    const course = await createCourse(adminCookie, {
+      startsOn: isoInDays(-1),
+      endsOn: isoInDays(1),
+    })
+
+    const response = await anmelden(course.id)
+    expect(response.status).toBe(422)
+    expect((await response.json()).statusMessage).toContain('begonnen')
+  })
+
+  it('FV-14, AC-4: am Starttag selbst nimmt der Lehrgang keine Anmeldung mehr an', async () => {
+    const course = await createCourse(adminCookie, {
+      startsOn: isoInDays(0),
+      endsOn: isoInDays(2),
+    })
+
+    expect((await anmelden(course.id)).status).toBe(422)
+  })
+
+  it('FV-14, AC-4: bis zum Vortag des Beginns bleibt die Anmeldung offen', async () => {
+    const course = await createCourse(adminCookie, {
+      startsOn: isoInDays(1),
+      endsOn: isoInDays(3),
+    })
+
+    expect((await anmelden(course.id)).status).toBe(201)
   })
 
   it('AC-2: ein unbekannter Lehrgang führt zu 404', async () => {
@@ -159,19 +185,17 @@ describe('FV-5 Interessensbekundung', () => {
   })
 
   it('AC-11: die Belegung zählt nur bestätigte Anmeldungen', async () => {
-    const course = await createCourse(adminCookie, { capacity: 5 })
+    const course = await createCourse(adminCookie)
     await anmelden(course.id)
     insertSignup(DB, course.id, 'bestaetigt', 'bestaetigt@test.local')
     insertSignup(DB, course.id, 'abgelehnt', 'abgelehnt@test.local')
 
     const daten = await detail(course.id)
     expect(daten.confirmedCount).toBe(1)
-    expect(daten.freeSeats).toBe(4)
-    expect(daten.fullyBooked).toBe(false)
   })
 
   it('AC-10: zu viele Anmeldungen derselben IP werden mit 429 abgewiesen', async () => {
-    const course = await createCourse(adminCookie, { capacity: 999 })
+    const course = await createCourse(adminCookie)
     const ip = '127.0.8.99'
 
     let letzterStatus = 0

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, count, desc, eq, lt, lte, ne, or } from 'drizzle-orm'
+import { and, count, desc, eq, ne } from 'drizzle-orm'
 import type { SignupStatus } from '../../shared/constants'
 import { SIGNUP_STATUS_LABELS } from '../../shared/constants'
 import { TEMPLATES } from '../../shared/mail-templates'
@@ -63,7 +63,6 @@ export function listSignups(query: SignupListQuery) {
       courseId: signups.courseId,
       courseTitle: courses.title,
       courseStartsOn: courses.startsOn,
-      courseCapacity: courses.capacity,
       courseStatus: courses.status,
     })
     .from(signups)
@@ -92,34 +91,7 @@ export function listSignups(query: SignupListQuery) {
     summaryRows.map(row => [row.status, row.value]),
   ) as Partial<Record<SignupStatus, number>>
 
-  // Kennzeichnen, wer ueber der Platzzahl liegt (AC-6): der wievielte bestaetigte Platz ist das?
-  // Zaehlung nach Eingangsreihenfolge – wer zuerst da war, hat den Platz.
-  const withFlags = items.map((item) => {
-    if (item.status !== 'bestaetigt' || item.courseCapacity <= 0) {
-      return { ...item, ueberKapazitaet: false }
-    }
-
-    // `createdAt` hat nur Sekundenaufloesung; bei Gleichstand entscheidet die ID,
-    // damit die Reihenfolge stabil bleibt und nicht beide Plaetze als ueberzaehlig gelten.
-    const rang = db
-      .select({ value: count() })
-      .from(signups)
-      .where(
-        and(
-          eq(signups.courseId, item.courseId),
-          eq(signups.status, 'bestaetigt'),
-          or(
-            lt(signups.createdAt, item.createdAt),
-            and(eq(signups.createdAt, item.createdAt), lte(signups.id, item.id)),
-          ),
-        ),
-      )
-      .get()?.value ?? 0
-
-    return { ...item, ueberKapazitaet: rang > item.courseCapacity }
-  })
-
-  return { items: withFlags, total, page: query.page, limit: query.limit, summary }
+  return { items, total, page: query.page, limit: query.limit, summary }
 }
 
 function signupOrThrow(id: string) {

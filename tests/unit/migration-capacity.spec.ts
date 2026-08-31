@@ -11,11 +11,13 @@ describe('FV-13 Lehrgangsfelder reduzieren – Migration', () => {
   it('AC-7: hebt bestehende Lehrgänge mit capacity = 0 auf 1 an, statt zu scheitern', async () => {
     const connection = new Database(':memory:')
 
-    // Nur die ersten beiden Migrationen anwenden – der Stand, auf dem 0002 aufsetzt.
+    // Nur die ersten beiden Migrationen anwenden – der Stand, auf dem 0002 aufsetzt. Nach
+    // Index gefiltert statt nach Tag-Namen ausgeschlossen: sonst rutschen neu hinzugekommene
+    // Migrationen (wie 0003, die `capacity` komplett entfernt) versehentlich mit hindurch.
     const fullJournal = (await filesystemSource.journal())!
     const preMigrationSource = {
       journal: async (): Promise<MigrationJournal> => ({
-        entries: fullJournal.entries.filter(entry => entry.tag !== '0002_brief_betty_ross'),
+        entries: fullJournal.entries.filter(entry => entry.idx < 2),
       }),
       sql: filesystemSource.sql,
     }
@@ -26,8 +28,16 @@ describe('FV-13 Lehrgangsfelder reduzieren – Migration', () => {
       VALUES ('unbegrenzt-kurs', 'Alter Lehrgang', 'grundausbildung', 'standortausbildung', 0, 0, 0)
     `)
 
-    // Jetzt die verbleibende Migration (0002) anwenden.
-    await applyMigrations(connection, filesystemSource)
+    // Jetzt die verbleibende Migration (0002) anwenden - aber nicht 0003 (die `capacity`
+    // spaeter komplett entfernt, siehe FV-14), sonst gaebe es die Spalte fuer die Probe unten
+    // nicht mehr.
+    const throughMigration0002 = {
+      journal: async (): Promise<MigrationJournal> => ({
+        entries: fullJournal.entries.filter(entry => entry.idx <= 2),
+      }),
+      sql: filesystemSource.sql,
+    }
+    await applyMigrations(connection, throughMigration0002)
 
     const row = connection
       .prepare('SELECT capacity FROM courses WHERE id = ?')

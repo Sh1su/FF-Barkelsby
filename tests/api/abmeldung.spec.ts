@@ -73,7 +73,7 @@ describe('FV-5 Selbstabmeldung über den Token-Link', () => {
   })
 
   it('AC-11: nach dem Storno zählt die Anmeldung nicht mehr zur Belegung', async () => {
-    const course = await createCourse(adminCookie, { capacity: 2 })
+    const course = await createCourse(adminCookie)
     const token = randomUUID()
     insertSignup(DB, course.id, 'bestaetigt', 'zaehlt@test.local', token)
 
