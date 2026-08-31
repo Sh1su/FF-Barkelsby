@@ -2,7 +2,7 @@
 const motif = defineModel<number | undefined>('motif', { required: true })
 const palette = defineModel<number | undefined>('palette', { required: true })
 
-const props = defineProps<{ title?: string, category?: string }>()
+const props = defineProps<{ title?: string }>()
 
 const MOTIFS = [0, 1, 2, 3, 4, 5, 6, 7]
 const PALETTES = [0, 1, 2, 3]
@@ -14,7 +14,6 @@ function previewUrl(index: number) {
     motif: String(index),
     palette: String(activePalette.value),
     title: props.title || 'Vorschau',
-    category: props.category || 'Lehrgang',
   })
   return `/api/admin/cover-preview.svg?${params.toString()}`
 }

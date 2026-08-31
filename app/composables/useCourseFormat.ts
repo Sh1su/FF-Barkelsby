@@ -35,7 +35,6 @@ export function useCourseFormat() {
   }
 
   function seatsLabel(capacity: number, confirmedCount: number): string {
-    if (capacity <= 0) return 'Plätze nach Absprache'
     return `${confirmedCount} von ${capacity} Plätzen belegt`
   }
 

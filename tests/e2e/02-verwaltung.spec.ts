@@ -27,7 +27,7 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
     await expect(page.getByTestId('admin-tabs')).toHaveCount(0)
   })
 
-  test('AC-4/AC-7: Klick auf einen Tag legt einen Lehrgang an, der sofort sichtbar ist', async ({ page }) => {
+  test('AC-4/AC-7, FV-13 AC-1: Klick auf einen Tag legt einen Lehrgang mit reduzierten Feldern an', async ({ page }) => {
     await login(page, ADMIN.email, ADMIN.password)
 
     await expect(page.getByTestId('course-calendar')).toBeVisible()
@@ -46,6 +46,14 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
 
     await expect(page.getByTestId('course-create-form')).toBeVisible()
     await expect(page.getByTestId('course-start-input')).toHaveValue(tag)
+
+    // FV-13, AC-1: Kategorie, Format, Uhrzeit, Ausbilder und Ort fragt das Formular nicht mehr ab.
+    const form = page.getByTestId('course-create-form')
+    await expect(form.getByText('Kategorie')).toHaveCount(0)
+    await expect(form.getByText('Format')).toHaveCount(0)
+    await expect(form.getByText('Uhrzeit')).toHaveCount(0)
+    await expect(form.getByText('Ausbilder')).toHaveCount(0)
+    await expect(form.getByText('Ort', { exact: true })).toHaveCount(0)
 
     await fillStable(page.getByTestId('course-title-input'), TITEL)
     await fillStable(page.getByTestId('course-capacity-input'), '8')
@@ -76,40 +84,18 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
     await expect(page.getByTestId('course-list')).toBeVisible()
   })
 
-  test('FV-2 AC-2: der Kategoriefilter steht in der URL und übersteht ein Neuladen', async ({ page }) => {
-    await login(page, GUEST.email, GUEST.password)
-
-    await page.getByTestId('course-filter-atemschutz').click()
-    await expect(page).toHaveURL(/kategorie=atemschutz/)
-
-    await page.reload()
-    await expect(page.getByTestId('course-filter-atemschutz')).toHaveAttribute('aria-pressed', 'true')
-  })
-
-  test('AC-8: die Bearbeitungsseite lädt auch mit zugeordnetem Ausbilder', async ({ page }) => {
+  test('AC-8, FV-13 AC-2: die Bearbeitungsseite lädt ohne die reduzierten Felder', async ({ page }) => {
     await login(page, ADMIN.email, ADMIN.password)
-
-    const cookie = (await page.context().cookies())
-      .map(entry => `${entry.name}=${entry.value}`)
-      .join('; ')
-
-    // Regression: ein leerer Auswahlwert ("Ohne Ausbilder") liess die Seite mit 500 abstuerzen.
-    const instructor = await (await page.request.post('/api/admin/instructors', {
-      headers: { cookie },
-      data: { name: 'Brandmeister Regression', role: 'Ausbilder' },
-    })).json()
 
     await page.getByTestId('admin-course-row').filter({ hasText: TITEL }).getByTestId('admin-course-edit').click()
     await expect(page.getByTestId('edit-title')).toBeVisible()
-
-    await page.request.patch(page.url().replace('/verwaltung/lehrgang/', '/api/admin/courses/'), {
-      headers: { cookie },
-      data: { instructorId: instructor.id },
-    })
-
-    await page.reload()
-    await expect(page.getByTestId('edit-title')).toBeVisible()
     await expect(page.getByTestId('edit-save')).toBeEnabled()
+
+    await expect(page.getByText('Kategorie')).toHaveCount(0)
+    await expect(page.getByText('Format')).toHaveCount(0)
+    await expect(page.getByText('Uhrzeit')).toHaveCount(0)
+    await expect(page.getByText('Ausbilder')).toHaveCount(0)
+    await expect(page.getByText('Ort', { exact: true })).toHaveCount(0)
   })
 
   test('AC-10: ein abgesagter Lehrgang bleibt sichtbar und ist markiert', async ({ page }) => {
@@ -141,8 +127,6 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
         title: 'E2E Registraturlehrgang',
         startsOn: isoInDays(45),
         endsOn: isoInDays(45),
-        category: 'atemschutz',
-        format: 'kreisausbildung',
         capacity: 5,
       },
     })).json()

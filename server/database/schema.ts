@@ -1,9 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { check, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import {
-  CATEGORIES,
   COURSE_STATUSES,
-  FORMATS,
   MAIL_STATUSES,
   SIGNUP_STATUSES,
   USER_ROLES,
@@ -56,16 +54,6 @@ export const revokedSessions = sqliteTable(
   table => [index('revoked_sessions_expires_at_idx').on(table.expiresAt)],
 )
 
-/** Ausbilder mit Portraet-Motiv, Rolle und Vita – auf der Detailseite sichtbar. */
-export const instructors = sqliteTable('instructors', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  role: text('role'),
-  vita: text('vita'),
-  motif: integer('motif'),
-  ...timestamps,
-})
-
 export const courses = sqliteTable(
   'courses',
   {
@@ -74,15 +62,10 @@ export const courses = sqliteTable(
     summary: text('summary'),
     description: text('description'),
     topics: text('topics', { mode: 'json' }).$type<string[]>(),
-    category: text('category', { enum: CATEGORIES }).notNull(),
-    format: text('format', { enum: FORMATS }).notNull(),
     startsOn: integer('starts_on', { mode: 'timestamp' }).notNull(),
     endsOn: integer('ends_on', { mode: 'timestamp' }).notNull(),
-    timeLabel: text('time_label'),
-    location: text('location'),
-    /** 0 = unbegrenzt. Sonst Zahl der Plaetze; belegt zaehlt nur bestaetigte Anmeldungen. */
-    capacity: integer('capacity').notNull().default(0),
-    instructorId: text('instructor_id').references(() => instructors.id, { onDelete: 'set null' }),
+    /** Zahl der Plaetze, > 0; belegt zaehlt nur bestaetigte Anmeldungen (FV-13, AC-7). */
+    capacity: integer('capacity').notNull(),
     motif: integer('motif'),
     palette: integer('palette'),
     status: text('status', { enum: COURSE_STATUSES }).notNull().default('geplant'),
@@ -90,18 +73,9 @@ export const courses = sqliteTable(
   },
   table => [
     index('courses_starts_on_idx').on(table.startsOn),
-    index('courses_category_starts_on_idx').on(table.category, table.startsOn),
     index('courses_ends_on_idx').on(table.endsOn),
-    check(
-      'courses_category_check',
-      sql`${table.category} in ('grundausbildung', 'atemschutz', 'technische-hilfeleistung', 'fuehrung-organisation', 'erste-hilfe')`,
-    ),
-    check(
-      'courses_format_check',
-      sql`${table.format} in ('standortausbildung', 'kreisausbildung')`,
-    ),
     check('courses_status_check', sql`${table.status} in ('geplant', 'abgesagt')`),
-    check('courses_capacity_check', sql`${table.capacity} >= 0`),
+    check('courses_capacity_check', sql`${table.capacity} > 0`),
     check('courses_dates_check', sql`${table.endsOn} >= ${table.startsOn}`),
   ],
 )

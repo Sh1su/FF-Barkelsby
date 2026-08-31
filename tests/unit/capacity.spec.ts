@@ -8,11 +8,6 @@ describe('FV-2 Lehrgangskatalog – Belegung', () => {
     expect(isFullyBooked(10, 11)).toBe(true)
   })
 
-  it('AC-6: Kapazität 0 bedeutet unbegrenzt – nie ausgebucht', () => {
-    expect(isFullyBooked(0, 50)).toBe(false)
-    expect(freeSeats(0, 50)).toBeNull()
-  })
-
   it('AC-6: freie Plätze werden nie negativ', () => {
     expect(freeSeats(10, 3)).toBe(7)
     expect(freeSeats(10, 14)).toBe(0)

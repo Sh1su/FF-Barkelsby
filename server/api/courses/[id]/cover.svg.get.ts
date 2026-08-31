@@ -1,4 +1,3 @@
-import { CATEGORY_LABELS } from '../../../../shared/constants'
 import { courseIdSchema, coverQuerySchema } from '../../../../shared/validation/course'
 import { getCourseCoverInput } from '../../../services/course.service'
 import { renderCover } from '../../../utils/cover'
@@ -17,8 +16,6 @@ export default defineEventHandler(async (event) => {
   const svg = renderCover({
     id: course.id,
     title: course.title,
-    category: CATEGORY_LABELS[course.category],
-    subtitle: course.instructorName ?? undefined,
     motif: course.motif,
     palette: course.palette,
     variant,

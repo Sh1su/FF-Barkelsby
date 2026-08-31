@@ -5,6 +5,11 @@
 **Last Updated:** 2026-08-10 (Implementierung)
 **Abhängigkeiten:** FV-1 (Login-Gate)
 
+> **Hinweis (2026-08-31):** [FV-13](FV-13-lehrgangsfelder-reduzieren.md) hat Kategorie, Format,
+> Uhrzeit, Ausbilder und Ort entfernt. Alle Stellen unten, die diese Felder erwähnen (AC-2, AC-3,
+> AC-5, AC-8, Tech Design, Tabelle `instructors`), sind historisch und spiegeln nicht mehr den
+> aktuellen Stand.
+
 ## Ziel
 
 Die Gast-Ansicht aus dem Design: eine Übersicht der kommenden Lehrgänge mit Suche und

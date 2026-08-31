@@ -5,6 +5,11 @@
 **Last Updated:** 2026-08-10 (Implementierung)
 **Abhängigkeiten:** FV-1 (Login-Gate), FV-2 (Datenmodell der Lehrgänge)
 
+> **Hinweis (2026-08-31):** [FV-13](FV-13-lehrgangsfelder-reduzieren.md) hat Kategorie, Format,
+> Uhrzeit, Ausbilder und Ort inkl. der Ausbilder-Verwaltung wieder entfernt. Alle Stellen unten,
+> die diese Felder erwähnen (AC-5, AC-8, Tech Design, Tabelle `instructors`), sind historisch und
+> spiegeln nicht mehr den aktuellen Stand.
+
 ## Ziel
 
 Der Verwaltungsbereich aus dem Design: ein Monatskalender mit Schnellanlage per Klick auf einen Tag,

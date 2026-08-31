@@ -107,8 +107,6 @@ async function sendSignupMails(
   const basis = {
     courseTitle: course.title,
     dateRange: formatRange(course.startsOn, course.endsOn),
-    timeLabel: course.timeLabel,
-    location: course.location,
     organisation,
   }
 

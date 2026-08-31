@@ -1,9 +1,7 @@
 import { z } from 'zod'
-import { CATEGORIES, FORMATS } from '../constants'
 
 /** Filter der Lehrgangsübersicht (FV-2, AC-2/AC-3/AC-11). */
 export const courseListQuerySchema = z.object({
-  kategorie: z.enum(CATEGORIES).optional().catch(undefined),
   q: z.string().trim().max(120).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(25),
@@ -29,12 +27,7 @@ export const createCourseSchema = z
     title: z.string().trim().min(3, 'Bitte einen Titel angeben.').max(160),
     startsOn: isoDate,
     endsOn: isoDate,
-    category: z.enum(CATEGORIES),
-    format: z.enum(FORMATS),
-    timeLabel: z.string().trim().max(60).optional(),
-    location: z.string().trim().max(120).optional(),
-    capacity: z.coerce.number().int().min(0).max(999).default(0),
-    instructorId: z.string().max(64).optional(),
+    capacity: z.coerce.number().int().min(1, 'Bitte eine Platzzahl größer 0 angeben.').max(999),
     motif: z.coerce.number().int().min(0).max(7).optional(),
     palette: z.coerce.number().int().min(0).max(3).optional(),
   })
@@ -59,14 +52,9 @@ export const updateCourseSchema = z
     summary: z.string().trim().max(300).optional(),
     description: z.string().trim().max(5000).optional(),
     topics: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
-    category: z.enum(CATEGORIES).optional(),
-    format: z.enum(FORMATS).optional(),
     startsOn: isoDate.optional(),
     endsOn: isoDate.optional(),
-    timeLabel: z.string().trim().max(60).optional(),
-    location: z.string().trim().max(120).optional(),
-    capacity: z.coerce.number().int().min(0).max(999).optional(),
-    instructorId: z.string().max(64).nullable().optional(),
+    capacity: z.coerce.number().int().min(1, 'Bitte eine Platzzahl größer 0 angeben.').max(999).optional(),
     motif: z.coerce.number().int().min(0).max(7).nullable().optional(),
     palette: z.coerce.number().int().min(0).max(3).nullable().optional(),
     days: z.array(courseDayInputSchema).max(60).optional(),
@@ -86,11 +74,4 @@ export const cancelCourseSchema = z.object({
 export const adminCourseRangeSchema = z.object({
   von: isoDate.optional(),
   bis: isoDate.optional(),
-})
-
-export const instructorSchema = z.object({
-  name: z.string().trim().min(2, 'Bitte einen Namen angeben.').max(120),
-  role: z.string().trim().max(120).optional(),
-  vita: z.string().trim().max(2000).optional(),
-  motif: z.coerce.number().int().min(0).max(7).optional(),
 })

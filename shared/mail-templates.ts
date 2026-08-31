@@ -23,8 +23,6 @@ export interface CourseMailData {
   courseTitle: string
   /** Bereits formatierter Zeitraum, z. B. "22.08. – 24.08.2026". */
   dateRange: string
-  timeLabel?: string | null
-  location?: string | null
   organisation: string
   recipientFirstName: string
   /** Nur bei Verschiebung: der bisherige Zeitraum. */
@@ -41,10 +39,7 @@ function greeting(firstName: string): string {
 }
 
 function courseFacts(data: CourseMailData): string {
-  const lines = [`Lehrgang: ${data.courseTitle}`, `Zeitraum: ${data.dateRange}`]
-  if (data.timeLabel) lines.push(`Uhrzeit: ${data.timeLabel}`)
-  if (data.location) lines.push(`Ort: ${data.location}`)
-  return lines.join('\n')
+  return [`Lehrgang: ${data.courseTitle}`, `Zeitraum: ${data.dateRange}`].join('\n')
 }
 
 export function renderCourseCancelled(data: CourseMailData): RenderedMail {

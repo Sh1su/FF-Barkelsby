@@ -3,31 +3,6 @@
 export const USER_ROLES = ['guest', 'admin'] as const
 export type UserRole = (typeof USER_ROLES)[number]
 
-export const CATEGORIES = [
-  'grundausbildung',
-  'atemschutz',
-  'technische-hilfeleistung',
-  'fuehrung-organisation',
-  'erste-hilfe',
-] as const
-export type Category = (typeof CATEGORIES)[number]
-
-export const CATEGORY_LABELS: Record<Category, string> = {
-  'grundausbildung': 'Grundausbildung',
-  'atemschutz': 'Atemschutz',
-  'technische-hilfeleistung': 'Technische Hilfeleistung',
-  'fuehrung-organisation': 'Führung & Organisation',
-  'erste-hilfe': 'Erste Hilfe / Sanitätsdienst',
-}
-
-export const FORMATS = ['standortausbildung', 'kreisausbildung'] as const
-export type Format = (typeof FORMATS)[number]
-
-export const FORMAT_LABELS: Record<Format, string> = {
-  standortausbildung: 'Standortausbildung',
-  kreisausbildung: 'Kreisausbildung',
-}
-
 export const COURSE_STATUSES = ['geplant', 'abgesagt'] as const
 export type CourseStatus = (typeof COURSE_STATUSES)[number]
 

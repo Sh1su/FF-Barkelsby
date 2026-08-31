@@ -1,23 +1,18 @@
 import { and, asc, count, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import type { CourseListQuery } from '../../shared/validation/course'
-import { courseDays, courses, instructors, signups } from '../database/schema'
+import { courseDays, courses, signups } from '../database/schema'
 
 /**
  * Fachlogik rund um Lehrgänge. Die Routen bleiben duenn:
  * validieren -> autorisieren -> Service -> Antwort formen.
  */
 
-/**
- * Belegung zaehlt ausschliesslich bestaetigte Anmeldungen (PRD, Q14).
- * Kapazitaet 0 bedeutet "unbegrenzt" – dann gibt es kein "ausgebucht".
- */
+/** Belegung zaehlt ausschliesslich bestaetigte Anmeldungen (PRD, Q14). */
 export function isFullyBooked(capacity: number, confirmedCount: number): boolean {
-  if (capacity <= 0) return false
   return confirmedCount >= capacity
 }
 
-export function freeSeats(capacity: number, confirmedCount: number): number | null {
-  if (capacity <= 0) return null
+export function freeSeats(capacity: number, confirmedCount: number): number {
   return Math.max(0, capacity - confirmedCount)
 }
 
@@ -39,17 +34,12 @@ const cardColumns = {
   id: courses.id,
   title: courses.title,
   summary: courses.summary,
-  category: courses.category,
-  format: courses.format,
   startsOn: courses.startsOn,
   endsOn: courses.endsOn,
-  timeLabel: courses.timeLabel,
-  location: courses.location,
   capacity: courses.capacity,
   status: courses.status,
   motif: courses.motif,
   palette: courses.palette,
-  instructorName: instructors.name,
 }
 
 /**
@@ -65,17 +55,12 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
 
   const conditions = [gte(courses.endsOn, startOfToday)]
 
-  if (query.kategorie) {
-    conditions.push(eq(courses.category, query.kategorie))
-  }
-
   if (query.q) {
     const needle = `%${query.q.toLowerCase()}%`
     conditions.push(
       or(
         like(sql`lower(${courses.title})`, needle),
         like(sql`lower(coalesce(${courses.summary}, ''))`, needle),
-        like(sql`lower(coalesce(${instructors.name}, ''))`, needle),
       )!,
     )
   }
@@ -86,7 +71,6 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
   const items = db
     .select(cardColumns)
     .from(courses)
-    .leftJoin(instructors, eq(courses.instructorId, instructors.id))
     .where(where)
     .orderBy(asc(courses.startsOn), asc(courses.title))
     .limit(query.limit)
@@ -96,7 +80,6 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
   const total = db
     .select({ value: count() })
     .from(courses)
-    .leftJoin(instructors, eq(courses.instructorId, instructors.id))
     .where(where)
     .get()?.value ?? 0
 
@@ -118,7 +101,7 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
   }
 }
 
-/** Detailseite inkl. Programm und Ausbilder (FV-2, AC-8). */
+/** Detailseite inkl. Programm (FV-2, AC-8). */
 export function getCourseDetail(id: string) {
   const db = useDatabase()
 
@@ -127,13 +110,8 @@ export function getCourseDetail(id: string) {
       ...cardColumns,
       description: courses.description,
       topics: courses.topics,
-      instructorId: courses.instructorId,
-      instructorRole: instructors.role,
-      instructorVita: instructors.vita,
-      instructorMotif: instructors.motif,
     })
     .from(courses)
-    .leftJoin(instructors, eq(courses.instructorId, instructors.id))
     .where(eq(courses.id, id))
     .get()
 
@@ -155,31 +133,13 @@ export function getCourseDetail(id: string) {
     .orderBy(asc(courseDays.dayNumber))
     .all()
 
-  const {
-    instructorName,
-    instructorRole,
-    instructorVita,
-    instructorMotif,
-    instructorId,
-    ...rest
-  } = course
-
   const bestaetigt = confirmedCounts([id])[id] ?? 0
 
   return {
-    ...rest,
+    ...course,
     confirmedCount: bestaetigt,
     fullyBooked: isFullyBooked(course.capacity, bestaetigt),
     freeSeats: freeSeats(course.capacity, bestaetigt),
-    instructor: instructorId
-      ? {
-          id: instructorId,
-          name: instructorName,
-          role: instructorRole,
-          vita: instructorVita,
-          motif: instructorMotif,
-        }
-      : null,
     days,
   }
 }
@@ -190,13 +150,10 @@ export function getCourseCoverInput(id: string) {
     .select({
       id: courses.id,
       title: courses.title,
-      category: courses.category,
       motif: courses.motif,
       palette: courses.palette,
-      instructorName: instructors.name,
     })
     .from(courses)
-    .leftJoin(instructors, eq(courses.instructorId, instructors.id))
     .where(eq(courses.id, id))
     .get()
 

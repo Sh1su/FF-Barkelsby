@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { fetch } from '@nuxt/test-utils/e2e'
 import { startTestServer } from '../helpers/server'
 import { signIn } from '../helpers/session'
-import { createCourse, createInstructor, isoInDays } from '../factories/course'
+import { createCourse, isoInDays } from '../factories/course'
 
 await startTestServer('courses-detail')
 
@@ -15,8 +15,7 @@ beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.2.1')
   guestCookie = await signIn('guest', '127.0.2.2')
 
-  const instructor = await createInstructor(adminCookie)
-  const course = await createCourse(adminCookie, { instructorId: instructor.id })
+  const course = await createCourse(adminCookie)
   courseId = course.id
 
   await fetch(`/api/admin/courses/${courseId}`, {
@@ -44,14 +43,23 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
     expect(response.status).toBe(401)
   })
 
-  it('AC-8: liefert Beschreibung, Themen, Programm und Ausbilder', async () => {
+  it('AC-8: liefert Beschreibung, Themen und Programm', async () => {
     const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
 
     expect(data.description).toBe('Grundlagen für neue Einsatzkräfte.')
     expect(data.topics).toEqual(['Rechtsgrundlagen', 'Fahrzeugkunde'])
     expect(data.days).toHaveLength(2)
     expect(data.days[0]).toMatchObject({ dayNumber: 1, title: 'Theorie', bullets: ['Recht', 'Technik'] })
-    expect(data.instructor).toMatchObject({ name: 'Hauptbrandmeister Krause', role: 'Ausbilder Atemschutz' })
+  })
+
+  it('FV-13, AC-3: liefert keine Kategorie/Format/Ausbilder/Uhrzeit/Ort mehr', async () => {
+    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
+
+    expect(data).not.toHaveProperty('category')
+    expect(data).not.toHaveProperty('format')
+    expect(data).not.toHaveProperty('timeLabel')
+    expect(data).not.toHaveProperty('location')
+    expect(data).not.toHaveProperty('instructor')
   })
 
   it('AC-8: ein schnell angelegter Lehrgang liefert leere Abschnitte statt Platzhaltertexten', async () => {
@@ -60,7 +68,6 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
     expect(data.description).toBeNull()
     expect(data.topics).toBeNull()
     expect(data.days).toEqual([])
-    expect(data.instructor).toBeNull()
   })
 
   it('AC-8: liefert für einen unbekannten Lehrgang 404', async () => {

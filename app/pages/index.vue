@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { CATEGORIES, type Category } from '#shared/constants'
-
 const { organisation } = useRuntimeConfig().public
 const route = useRoute()
 const router = useRouter()
@@ -9,19 +7,13 @@ useHead({ title: 'Aktuelle Lehrgänge' })
 
 // Filterzustand steht in der URL (FV-2, AC-2) und übersteht damit ein Neuladen.
 const search = ref(typeof route.query.q === 'string' ? route.query.q : '')
-const category = ref<Category | undefined>(
-  CATEGORIES.includes(route.query.kategorie as Category)
-    ? (route.query.kategorie as Category)
-    : undefined,
-)
 
 const debouncedSearch = useDebounced(search, 250)
 
-watch([debouncedSearch, category], ([q, kategorie]) => {
+watch(debouncedSearch, (q) => {
   router.replace({
     query: {
       ...(q ? { q } : {}),
-      ...(kategorie ? { kategorie } : {}),
     },
   })
 })
@@ -29,7 +21,6 @@ watch([debouncedSearch, category], ([q, kategorie]) => {
 const { data, status } = await useFetch('/api/courses', {
   query: computed(() => ({
     q: debouncedSearch.value || undefined,
-    kategorie: category.value,
   })),
 })
 
@@ -37,7 +28,6 @@ const courses = computed(() => data.value?.items ?? [])
 
 function resetFilters() {
   search.value = ''
-  category.value = undefined
 }
 </script>
 
@@ -52,7 +42,7 @@ function resetFilters() {
       </p>
     </header>
 
-    <CoursesCourseFilterBar v-model:search="search" v-model:category="category" />
+    <CoursesCourseFilterBar v-model:search="search" />
 
     <p class="text-sm text-muted" data-testid="course-result-label">
       {{ data?.total ?? 0 }} {{ (data?.total ?? 0) === 1 ? 'Lehrgang' : 'Lehrgänge' }}

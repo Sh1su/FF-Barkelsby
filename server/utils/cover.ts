@@ -5,8 +5,8 @@
  * reine Funktion, die einen SVG-String liefert. Damit gibt es nichts zu speichern,
  * nichts zusaetzlich zu sichern und keine toten Bildpfade nach einem Restore.
  *
- * Zwei Formate: Karte 800x320 und Hero 1180x340 – beide rein grafisch. Titel und
- * Kategorie stehen in der Oberflaeche direkt neben dem Bild und werden nicht hineingeschrieben.
+ * Zwei Formate: Karte 800x320 und Hero 1180x340 – beide rein grafisch. Der Titel steht in der
+ * Oberflaeche direkt neben dem Bild und wird nicht hineingeschrieben.
  */
 
 export const MOTIF_COUNT = 8
@@ -30,9 +30,6 @@ export type CoverVariant = 'card' | 'hero'
 export interface CoverInput {
   id: string
   title: string
-  /** Wird fuer die Bildbeschreibung genutzt, nicht mehr ins Bild geschrieben. */
-  category: string
-  subtitle?: string
   motif?: number | null
   palette?: number | null
   variant?: CoverVariant
@@ -216,12 +213,12 @@ export function renderCover(input: CoverInput): string {
     `<g opacity=".9" clip-path="url(#clip)">${motif(width, height, palette)}</g>`,
   ]
 
-  // Bewusst ohne Textband: Titel, Kategorie und Ausbilder stehen direkt neben dem Bild.
+  // Bewusst ohne Textband: der Titel steht direkt neben dem Bild.
   // Im Entwurf ersetzte der Text ein fehlendes Foto – in der Anwendung waere er doppelt.
   // Der Titel bleibt als aria-label erhalten, damit Screenreader das Bild einordnen koennen.
 
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${escapeXml(`${input.category}: ${input.title}`)}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${escapeXml(input.title)}">`,
     `<defs><clipPath id="clip"><rect width="${width}" height="${height}"/></clipPath></defs>`,
     body.join(''),
     '</svg>',
