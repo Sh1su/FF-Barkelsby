@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
-    "@nuxt/test-utils": "^4.1.0",
+    "@nuxt/test-utils": "^4.2.0",
     "@playwright/test": "^1.62.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/nodemailer": "^8.0.1",
