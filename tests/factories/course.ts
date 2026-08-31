@@ -8,12 +8,7 @@ export interface CourseOverrides {
   title?: string
   startsOn?: string
   endsOn?: string
-  category?: string
-  format?: string
-  timeLabel?: string
-  location?: string
   capacity?: number
-  instructorId?: string
   motif?: number
   palette?: number
 }
@@ -35,9 +30,6 @@ export async function createCourse(cookie: string, overrides: CourseOverrides = 
       title: 'Truppmann Grundausbildung',
       startsOn: isoInDays(14),
       endsOn: isoInDays(16),
-      category: 'grundausbildung',
-      format: 'standortausbildung',
-      timeLabel: '18:30 – 21:00',
       capacity: 12,
       ...overrides,
     }),
@@ -49,15 +41,4 @@ export async function createCourse(cookie: string, overrides: CourseOverrides = 
   }
 
   return response.json() as Promise<{ id: string, title: string, updatedAt: number }>
-}
-
-export async function createInstructor(cookie: string, name = 'Hauptbrandmeister Krause') {
-  const response = await fetch('/api/admin/instructors', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', cookie },
-    body: JSON.stringify({ name, role: 'Ausbilder Atemschutz', vita: 'Seit 2009 in der Wehr.' }),
-    redirect: 'manual',
-  })
-
-  return response.json() as Promise<{ id: string, name: string }>
 }

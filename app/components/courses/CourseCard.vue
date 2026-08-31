@@ -1,21 +1,14 @@
 <script setup lang="ts">
-import { CATEGORY_LABELS, FORMAT_LABELS, type Category, type Format } from '#shared/constants'
-
 interface CourseCardData {
   id: string
   title: string
   summary: string | null
-  category: Category
-  format: Format
   startsOn: string | number | Date
   endsOn: string | number | Date
-  timeLabel: string | null
-  location: string | null
   capacity: number
   confirmedCount: number
   fullyBooked: boolean
   status: 'geplant' | 'abgesagt'
-  instructorName: string | null
 }
 
 const props = defineProps<{ course: CourseCardData }>()
@@ -38,14 +31,6 @@ const cancelled = computed(() => props.course.status === 'abgesagt')
         class="aspect-[800/320] w-full object-cover"
         loading="lazy"
       >
-      <div class="absolute left-4 top-4 flex gap-2">
-        <UBadge color="neutral" variant="solid" size="sm">
-          {{ CATEGORY_LABELS[course.category] }}
-        </UBadge>
-        <UBadge color="neutral" variant="subtle" size="sm">
-          {{ FORMAT_LABELS[course.format] }}
-        </UBadge>
-      </div>
       <div
         class="absolute right-4 top-4 rounded-lg bg-default/95 px-3 py-1.5 text-center leading-tight"
         data-testid="course-date-badge"
@@ -74,12 +59,7 @@ const cancelled = computed(() => props.course.status === 'abgesagt')
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-calendar-days" class="size-4 shrink-0 text-dimmed" />
           <dt class="sr-only">Zeitraum</dt>
-          <dd>{{ dateRange(course.startsOn, course.endsOn) }}<span v-if="course.timeLabel"> · {{ course.timeLabel }}</span></dd>
-        </div>
-        <div v-if="course.instructorName" class="flex items-center gap-2">
-          <UIcon name="i-lucide-user" class="size-4 shrink-0 text-dimmed" />
-          <dt class="sr-only">Ausbilder</dt>
-          <dd>{{ course.instructorName }}</dd>
+          <dd>{{ dateRange(course.startsOn, course.endsOn) }}</dd>
         </div>
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-users" class="size-4 shrink-0 text-dimmed" />

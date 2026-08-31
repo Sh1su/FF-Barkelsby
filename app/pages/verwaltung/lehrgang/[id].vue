@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { CATEGORIES, CATEGORY_LABELS, FORMATS, FORMAT_LABELS } from '#shared/constants'
-
 definePageMeta({ layout: 'admin' })
 
 const route = useRoute()
@@ -9,7 +7,6 @@ const toast = useToast()
 const id = computed(() => String(route.params.id))
 
 const { data: course, refresh } = await useFetch(() => `/api/courses/${id.value}`)
-const { data: instructorData } = await useFetch('/api/admin/instructors')
 const { data: mailData, refresh: refreshMails } = await useFetch(() => `/api/admin/courses/${id.value}/mails`)
 
 useHead({ title: () => `${course.value?.title ?? 'Lehrgang'} bearbeiten` })
@@ -19,24 +16,13 @@ const state = reactive({
   summary: '',
   description: '',
   topics: [] as string[],
-  category: CATEGORIES[0] as (typeof CATEGORIES)[number],
-  format: FORMATS[0] as (typeof FORMATS)[number],
   startsOn: '',
   endsOn: '',
-  timeLabel: '',
-  location: '',
   capacity: 0,
-  instructorId: 'ohne' as string,
   motif: undefined as number | undefined,
   palette: undefined as number | undefined,
   days: [] as { dayNumber: number, date: string, timeLabel: string, title: string, bullets: string[] }[],
 })
-
-/**
- * Nuxt UI erlaubt keinen leeren String als Auswahlwert – deshalb ein eigener Platzhalterwert,
- * der beim Speichern wieder zu `null` wird.
- */
-const OHNE_AUSBILDER = 'ohne'
 
 const busy = ref(false)
 const errorMessage = ref('')
@@ -66,14 +52,9 @@ watchEffect(() => {
   state.summary = course.value.summary ?? ''
   state.description = course.value.description ?? ''
   state.topics = [...(course.value.topics ?? [])]
-  state.category = course.value.category
-  state.format = course.value.format
   state.startsOn = isoOf(course.value.startsOn)
   state.endsOn = isoOf(course.value.endsOn)
-  state.timeLabel = course.value.timeLabel ?? ''
-  state.location = course.value.location ?? ''
   state.capacity = course.value.capacity
-  state.instructorId = course.value.instructor?.id ?? OHNE_AUSBILDER
   state.motif = course.value.motif ?? undefined
   state.palette = course.value.palette ?? undefined
   state.days = course.value.days.map(day => ({
@@ -84,13 +65,6 @@ watchEffect(() => {
     bullets: [...(day.bullets ?? [])],
   }))
 })
-
-const categoryOptions = CATEGORIES.map(value => ({ value, label: CATEGORY_LABELS[value] }))
-const formatOptions = FORMATS.map(value => ({ value, label: FORMAT_LABELS[value] }))
-const instructorOptions = computed(() => [
-  { value: OHNE_AUSBILDER, label: 'Ohne Ausbilder' },
-  ...(instructorData.value?.items ?? []).map(item => ({ value: item.id, label: item.name })),
-])
 
 function addTopic() {
   const value = newTopic.value.trim()
@@ -103,7 +77,7 @@ function addDay() {
   state.days.push({
     dayNumber: state.days.length + 1,
     date: state.startsOn,
-    timeLabel: state.timeLabel,
+    timeLabel: '',
     title: '',
     bullets: [],
   })
@@ -130,14 +104,9 @@ async function save() {
         summary: state.summary || undefined,
         description: state.description || undefined,
         topics: state.topics,
-        category: state.category,
-        format: state.format,
         startsOn: state.startsOn,
         endsOn: state.endsOn,
-        timeLabel: state.timeLabel || undefined,
-        location: state.location || undefined,
         capacity: state.capacity,
-        instructorId: state.instructorId === OHNE_AUSBILDER ? null : state.instructorId,
         motif: state.motif ?? null,
         palette: state.palette ?? null,
         days: state.days
@@ -343,29 +312,14 @@ async function removeCourse() {
 
       <aside class="space-y-4">
         <div class="space-y-4 rounded-lg border border-default bg-default p-5">
-          <UFormField label="Kategorie">
-            <USelect v-model="state.category" :items="categoryOptions" class="w-full" />
-          </UFormField>
-          <UFormField label="Format">
-            <USelect v-model="state.format" :items="formatOptions" class="w-full" />
-          </UFormField>
           <UFormField label="Beginn">
             <UInput v-model="state.startsOn" type="date" class="w-full" />
           </UFormField>
           <UFormField label="Ende">
             <UInput v-model="state.endsOn" type="date" class="w-full" />
           </UFormField>
-          <UFormField label="Uhrzeit">
-            <UInput v-model="state.timeLabel" class="w-full" />
-          </UFormField>
-          <UFormField label="Ort">
-            <UInput v-model="state.location" class="w-full" />
-          </UFormField>
-          <UFormField label="Plätze" description="0 = unbegrenzt">
-            <UInput v-model.number="state.capacity" type="number" min="0" class="w-full" data-testid="edit-capacity" />
-          </UFormField>
-          <UFormField label="Ausbilder">
-            <USelect v-model="state.instructorId" :items="instructorOptions" class="w-full" />
+          <UFormField label="Plätze">
+            <UInput v-model.number="state.capacity" type="number" min="1" class="w-full" data-testid="edit-capacity" />
           </UFormField>
         </div>
 
@@ -377,7 +331,6 @@ async function removeCourse() {
             v-model:motif="state.motif"
             v-model:palette="state.palette"
             :title="state.title"
-            :category="CATEGORY_LABELS[state.category]"
           />
         </div>
 

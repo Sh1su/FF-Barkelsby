@@ -7,30 +7,29 @@ const BASE = {
   id: 'kurs-1',
   title: 'Truppmann Grundausbildung',
   summary: 'Grundlagen für neue Einsatzkräfte.',
-  category: 'grundausbildung' as const,
-  format: 'standortausbildung' as const,
   startsOn: '2026-09-11T00:00:00.000Z',
   endsOn: '2026-09-13T00:00:00.000Z',
-  timeLabel: '18:30 – 21:00',
-  location: 'Gerätehaus',
   capacity: 12,
   confirmedCount: 3,
   fullyBooked: false,
   status: 'geplant' as const,
-  instructorName: 'Oberbrandmeisterin Vogt',
 }
 
 describe('FV-2 Lehrgangskatalog – CourseCard', () => {
-  it('AC-5: zeigt Kategorie, Format, Titel, Zeitraum, Ausbilder und Belegung', async () => {
+  it('AC-5: zeigt Titel, Zeitraum und Belegung', async () => {
     const component = await mountSuspended(CourseCard, { props: { course: BASE } })
     const text = component.text()
 
-    expect(text).toContain('Grundausbildung')
-    expect(text).toContain('Standortausbildung')
     expect(text).toContain('Truppmann Grundausbildung')
-    expect(text).toContain('Oberbrandmeisterin Vogt')
     expect(text).toContain('3 von 12 Plätzen belegt')
     expect(component.find('[data-testid="course-date-badge"]').text()).toContain('11')
+  })
+
+  it('FV-13, AC-3: zeigt kein Format-/Kategorie-Badge mehr', async () => {
+    const component = await mountSuspended(CourseCard, { props: { course: BASE } })
+
+    expect(component.text()).not.toContain('Standortausbildung')
+    expect(component.text()).not.toContain('Oberbrandmeisterin')
   })
 
   it('AC-5: bindet das generierte Titelbild ein statt einer Bilddatei', async () => {
@@ -46,15 +45,6 @@ describe('FV-2 Lehrgangskatalog – CourseCard', () => {
 
     expect(component.find('[data-testid="course-full-badge"]').exists()).toBe(true)
     expect(component.text()).toContain('12 von 12 Plätzen belegt')
-  })
-
-  it('AC-6: ohne Kapazitätsgrenze gibt es kein Ausgebucht-Badge', async () => {
-    const component = await mountSuspended(CourseCard, {
-      props: { course: { ...BASE, capacity: 0, confirmedCount: 40, fullyBooked: false } },
-    })
-
-    expect(component.find('[data-testid="course-full-badge"]').exists()).toBe(false)
-    expect(component.text()).toContain('Plätze nach Absprache')
   })
 
   it('AC-7: markiert einen abgesagten Lehrgang', async () => {

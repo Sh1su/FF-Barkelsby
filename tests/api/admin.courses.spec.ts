@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { fetch } from '@nuxt/test-utils/e2e'
 import { startTestServer } from '../helpers/server'
 import { signIn } from '../helpers/session'
-import { createCourse, createInstructor, isoInDays } from '../factories/course'
+import { createCourse, isoInDays } from '../factories/course'
 import { insertSignup } from '../factories/signup'
 
 await startTestServer('admin-courses')
@@ -41,9 +41,6 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
         title: 'Maschinistenlehrgang',
         startsOn: isoInDays(30),
         endsOn: isoInDays(31),
-        category: 'technische-hilfeleistung',
-        format: 'kreisausbildung',
-        timeLabel: '08:00 – 17:00',
         capacity: 8,
       }),
     })
@@ -51,11 +48,23 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
     expect(response.status).toBe(201)
     expect(await response.json()).toMatchObject({
       title: 'Maschinistenlehrgang',
-      category: 'technische-hilfeleistung',
-      format: 'kreisausbildung',
       capacity: 8,
       status: 'geplant',
     })
+  })
+
+  it('FV-13, AC-5: weist eine Platzzahl von 0 mit 400 ab', async () => {
+    const response = await admin('/api/admin/courses', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Ohne Plätze',
+        startsOn: isoInDays(30),
+        endsOn: isoInDays(31),
+        capacity: 0,
+      }),
+    })
+
+    expect(response.status).toBe(400)
   })
 
   it('AC-6: weist ein Ende vor dem Beginn mit 400 ab', async () => {
@@ -65,8 +74,7 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
         title: 'Rückwärtslehrgang',
         startsOn: isoInDays(10),
         endsOn: isoInDays(5),
-        category: 'grundausbildung',
-        format: 'standortausbildung',
+        capacity: 10,
       }),
     })
 
@@ -80,8 +88,7 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
         title: 'Untergeschobener Status',
         startsOn: isoInDays(40),
         endsOn: isoInDays(40),
-        category: 'grundausbildung',
-        format: 'standortausbildung',
+        capacity: 10,
         status: 'abgesagt',
         confirmedCount: 99,
       }),
@@ -111,8 +118,7 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
 })
 
 describe('FV-3 Admin-Kalender – Bearbeiten', () => {
-  it('AC-8: speichert Beschreibung, Themen und Ausbilder', async () => {
-    const instructor = await createInstructor(adminCookie, 'Brandmeister Sonntag')
+  it('AC-8: speichert Beschreibung und Themen', async () => {
     const course = await createCourse(adminCookie)
 
     const response = await admin(`/api/admin/courses/${course.id}`, {
@@ -120,7 +126,6 @@ describe('FV-3 Admin-Kalender – Bearbeiten', () => {
       body: JSON.stringify({
         description: 'Ausführliche Beschreibung.',
         topics: ['Thema A', 'Thema B'],
-        instructorId: instructor.id,
       }),
     })
 
@@ -129,7 +134,6 @@ describe('FV-3 Admin-Kalender – Bearbeiten', () => {
     const detail = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
     expect(detail.description).toBe('Ausführliche Beschreibung.')
     expect(detail.topics).toEqual(['Thema A', 'Thema B'])
-    expect(detail.instructor.name).toBe('Brandmeister Sonntag')
   })
 
   it('AC-9: speichert Programmtage in der übergebenen Reihenfolge', async () => {
@@ -279,6 +283,17 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
     expect(exact.status).toBe(200)
   })
 
+  it('FV-13, AC-5: weist beim Bearbeiten eine Platzzahl von 0 mit 400 ab', async () => {
+    const course = await createCourse(adminCookie)
+
+    const response = await admin(`/api/admin/courses/${course.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ capacity: 0 }),
+    })
+
+    expect(response.status).toBe(400)
+  })
+
   it('AC-6: Belegung zählt nur bestätigte Anmeldungen', async () => {
     const course = await createCourse(adminCookie, { capacity: 2, title: 'Belegungstest' })
     insertSignup('admin-courses', course.id, 'bestaetigt')
@@ -301,5 +316,12 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
         guestCookie,
       )).status,
     ).toBe(403)
+  })
+})
+
+describe('FV-13 Lehrgangsfelder reduzieren – Ausbilder-Verwaltung entfernt', () => {
+  it('AC-6: GET und POST /api/admin/instructors existieren nicht mehr', async () => {
+    expect((await admin('/api/admin/instructors')).status).toBe(404)
+    expect((await admin('/api/admin/instructors', { method: 'POST', body: JSON.stringify({ name: 'x' }) })).status).toBe(404)
   })
 })

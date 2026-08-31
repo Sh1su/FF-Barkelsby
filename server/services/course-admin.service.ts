@@ -5,7 +5,7 @@ import type {
   UpdateCourseInput,
 } from '../../shared/validation/course'
 import type { CourseStatus } from '../../shared/constants'
-import { courseDays, courses, instructors, signups } from '../database/schema'
+import { courseDays, courses, signups } from '../database/schema'
 import { formatRange, notifyCourseRecipients } from './mail.service'
 
 /**
@@ -65,18 +65,13 @@ export function listCoursesInRange(from?: string, to?: string) {
     .select({
       id: courses.id,
       title: courses.title,
-      category: courses.category,
-      format: courses.format,
       startsOn: courses.startsOn,
       endsOn: courses.endsOn,
-      timeLabel: courses.timeLabel,
       capacity: courses.capacity,
       status: courses.status,
-      instructorName: instructors.name,
       updatedAt: courses.updatedAt,
     })
     .from(courses)
-    .leftJoin(instructors, eq(courses.instructorId, instructors.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(asc(courses.startsOn))
     .all()
@@ -90,14 +85,9 @@ export function createCourse(input: CreateCourseInput) {
     .values({
       id,
       title: input.title,
-      category: input.category,
-      format: input.format,
       startsOn: parseDate(input.startsOn),
       endsOn: parseDate(input.endsOn),
-      timeLabel: input.timeLabel,
-      location: input.location,
       capacity: input.capacity,
-      instructorId: input.instructorId || null,
       motif: input.motif ?? null,
       palette: input.palette ?? null,
     })
@@ -132,7 +122,7 @@ export async function updateCourse(id: string, input: UpdateCourseInput) {
   }
 
   // Kapazitaet nie unter die bereits bestaetigten Anmeldungen (FV-3, AC-14).
-  if (typeof input.capacity === 'number' && input.capacity > 0) {
+  if (typeof input.capacity === 'number') {
     const confirmed = countConfirmedSignups(id)
     if (input.capacity < confirmed) {
       throw createError({
@@ -149,14 +139,9 @@ export async function updateCourse(id: string, input: UpdateCourseInput) {
         summary: input.summary ?? existing.summary,
         description: input.description ?? existing.description,
         topics: input.topics ?? existing.topics,
-        category: input.category ?? existing.category,
-        format: input.format ?? existing.format,
         startsOn,
         endsOn,
-        timeLabel: input.timeLabel ?? existing.timeLabel,
-        location: input.location ?? existing.location,
         capacity: input.capacity ?? existing.capacity,
-        instructorId: input.instructorId === undefined ? existing.instructorId : input.instructorId,
         motif: input.motif === undefined ? existing.motif : input.motif,
         palette: input.palette === undefined ? existing.palette : input.palette,
         updatedAt: new Date(),
@@ -198,8 +183,6 @@ export async function updateCourse(id: string, input: UpdateCourseInput) {
         title: updated.title,
         startsOn: updated.startsOn,
         endsOn: updated.endsOn,
-        timeLabel: updated.timeLabel,
-        location: updated.location,
       },
       { previousDateRange: formatRange(existing.startsOn, existing.endsOn) },
     )
@@ -238,8 +221,6 @@ export async function transitionCourse(id: string, to: CourseStatus) {
       title: updated.title,
       startsOn: updated.startsOn,
       endsOn: updated.endsOn,
-      timeLabel: updated.timeLabel,
-      location: updated.location,
     })
   }
 
@@ -261,25 +242,6 @@ export function deleteCourse(id: string) {
 
   useDatabase().delete(courses).where(eq(courses.id, id)).run()
   return { ok: true }
-}
-
-export function listInstructors() {
-  return useDatabase()
-    .select()
-    .from(instructors)
-    .orderBy(asc(instructors.name))
-    .all()
-}
-
-export function createInstructor(input: { name: string, role?: string, vita?: string, motif?: number }) {
-  const db = useDatabase()
-  const id = randomUUID()
-
-  db.insert(instructors)
-    .values({ id, name: input.name, role: input.role, vita: input.vita, motif: input.motif ?? null })
-    .run()
-
-  return db.select().from(instructors).where(eq(instructors.id, id)).get()!
 }
 
 /** Nur fuer die Belegungsanzeige der Verwaltung. */

@@ -171,7 +171,7 @@ describe('FV-5 Interessensbekundung', () => {
   })
 
   it('AC-10: zu viele Anmeldungen derselben IP werden mit 429 abgewiesen', async () => {
-    const course = await createCourse(adminCookie, { capacity: 0 })
+    const course = await createCourse(adminCookie, { capacity: 999 })
     const ip = '127.0.8.99'
 
     let letzterStatus = 0

@@ -8,7 +8,7 @@ import {
   renderCover,
 } from '../../server/utils/cover'
 
-const BASE = { id: 'kurs-1', title: 'Truppmann Grundausbildung', category: 'Grundausbildung' }
+const BASE = { id: 'kurs-1', title: 'Truppmann Grundausbildung' }
 
 describe('FV-2 Lehrgangskatalog – Motiv-Generator', () => {
   it('AC-9: liefert für dieselbe ID immer dasselbe SVG', () => {
@@ -60,7 +60,7 @@ describe('FV-2 Lehrgangskatalog – Motiv-Generator', () => {
     // Der Titel steht in der Oberflaeche neben dem Bild – nicht noch einmal darin (QA-Befund).
     expect(card).not.toContain('<text')
     expect(hero).not.toContain('<text')
-    expect(card).toContain('aria-label="Grundausbildung: Truppmann Grundausbildung"')
+    expect(card).toContain('aria-label="Truppmann Grundausbildung"')
   })
 
   it('AC-9: alle Motive und Paletten erzeugen ein SVG', () => {

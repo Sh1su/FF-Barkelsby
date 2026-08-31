@@ -32,8 +32,6 @@ export interface CourseForMail {
   title: string
   startsOn: Date
   endsOn: Date
-  timeLabel: string | null
-  location: string | null
 }
 
 function recipientsFor(courseId: string) {
@@ -96,8 +94,6 @@ export async function notifyCourseRecipients(
     const mail = render({
       courseTitle: course.title,
       dateRange: formatRange(course.startsOn, course.endsOn),
-      timeLabel: course.timeLabel,
-      location: course.location,
       organisation,
       recipientFirstName: recipient.firstName,
       ...extra,

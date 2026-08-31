@@ -189,8 +189,6 @@ async function notifySignup(
   const mail = TEMPLATES[template]({
     courseTitle: course.title,
     dateRange: formatRange(course.startsOn, course.endsOn),
-    timeLabel: course.timeLabel,
-    location: course.location,
     organisation: config.public.organisation.name,
     recipientFirstName: signup.firstName,
     // Die Absage braucht keinen Abmelde-Link mehr.

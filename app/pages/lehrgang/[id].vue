@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { CATEGORY_LABELS, FORMAT_LABELS } from '#shared/constants'
-
 const route = useRoute()
 const id = computed(() => String(route.params.id))
 
@@ -14,21 +12,15 @@ const signupOpen = ref(false)
 
 const courseMeta = computed(() => {
   if (!course.value) return ''
-  const teile = [dateRange(course.value.startsOn, course.value.endsOn)]
-  if (course.value.timeLabel) teile.push(course.value.timeLabel)
-  if (course.value.location) teile.push(course.value.location)
-  return teile.join(' · ')
+  return dateRange(course.value.startsOn, course.value.endsOn)
 })
 
 const facts = computed(() => {
   if (!course.value) return []
   return [
     { icon: 'i-lucide-calendar-days', label: 'Zeitraum', value: dateRange(course.value.startsOn, course.value.endsOn) },
-    ...(course.value.timeLabel ? [{ icon: 'i-lucide-clock', label: 'Uhrzeit', value: course.value.timeLabel }] : []),
     { icon: 'i-lucide-hourglass', label: 'Dauer', value: durationLabel(course.value.startsOn, course.value.endsOn) },
-    ...(course.value.location ? [{ icon: 'i-lucide-map-pin', label: 'Ort', value: course.value.location }] : []),
     { icon: 'i-lucide-users', label: 'Plätze', value: seatsLabel(course.value.capacity, course.value.confirmedCount) },
-    { icon: 'i-lucide-layers', label: 'Format', value: FORMAT_LABELS[course.value.format] },
   ]
 })
 </script>
@@ -61,12 +53,6 @@ const facts = computed(() => {
       >
 
       <div class="flex flex-wrap items-center gap-2">
-        <UBadge color="neutral" variant="solid">
-          {{ CATEGORY_LABELS[course.category] }}
-        </UBadge>
-        <UBadge color="neutral" variant="subtle">
-          {{ FORMAT_LABELS[course.format] }}
-        </UBadge>
         <UBadge
           v-if="course.status === 'abgesagt'"
           color="error"
@@ -111,8 +97,6 @@ const facts = computed(() => {
           </section>
 
           <CoursesCourseProgram v-if="course.days.length" :days="course.days" />
-
-          <CoursesCourseInstructor v-if="course.instructor" :instructor="course.instructor" />
         </div>
 
         <aside class="space-y-4">

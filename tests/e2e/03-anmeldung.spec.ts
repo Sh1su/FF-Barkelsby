@@ -27,8 +27,6 @@ test.describe.serial('FV-5 Interessensbekundung', () => {
         title: TITEL,
         startsOn: isoInDays(30),
         endsOn: isoInDays(30),
-        category: 'erste-hilfe',
-        format: 'standortausbildung',
         capacity: 4,
       },
     })).json()

@@ -28,15 +28,13 @@ test.describe.serial('FV-2 Lehrgangskatalog – Layout', () => {
     })
   }
 
-  test('AC-12: Bedienelemente sind auf 375px mindestens 44px hoch', async ({ page }) => {
+  test('AC-12: das Suchfeld ist auf 375px mindestens 44px hoch', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await signIn(page, 'guest')
 
     const search = await page.getByTestId('course-search').boundingBox()
-    const filter = await page.getByTestId('course-filter-alle').boundingBox()
 
     expect(search!.height).toBeGreaterThanOrEqual(44)
-    expect(filter!.height).toBeGreaterThanOrEqual(44)
   })
 
   test('AC-12: Karten überlappen einander nicht', async ({ page }) => {
@@ -61,8 +59,7 @@ test.describe.serial('FV-2 Lehrgangskatalog – Layout', () => {
           title: titel,
           startsOn: iso,
           endsOn: iso,
-          category: 'grundausbildung',
-          format: 'standortausbildung',
+          capacity: 10,
         },
       })
       expect(response.status(), await response.text()).toBe(201)

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { CATEGORIES, CATEGORY_LABELS, FORMATS, FORMAT_LABELS } from '#shared/constants'
 import { createCourseSchema } from '#shared/validation/course'
 
 const open = defineModel<boolean>('open', { required: true })
@@ -7,18 +6,12 @@ const props = defineProps<{ date?: string }>()
 const emit = defineEmits<{ created: [] }>()
 
 const toast = useToast()
-const { data: instructorData } = await useFetch('/api/admin/instructors')
 
 const state = reactive({
   title: '',
   startsOn: props.date ?? '',
   endsOn: props.date ?? '',
-  category: CATEGORIES[0] as (typeof CATEGORIES)[number],
-  format: FORMATS[0] as (typeof FORMATS)[number],
-  timeLabel: '',
-  location: '',
-  capacity: 0,
-  instructorId: 'ohne' as string | undefined,
+  capacity: undefined as number | undefined,
   motif: undefined as number | undefined,
   palette: undefined as number | undefined,
 })
@@ -31,16 +24,6 @@ watch(() => props.date, (value) => {
   state.startsOn = value
   if (!state.endsOn || state.endsOn < value) state.endsOn = value
 })
-
-const categoryOptions = CATEGORIES.map(value => ({ value, label: CATEGORY_LABELS[value] }))
-const formatOptions = FORMATS.map(value => ({ value, label: FORMAT_LABELS[value] }))
-// Nuxt UI erlaubt keinen leeren String als Auswahlwert (siehe Editor-Seite).
-const OHNE_AUSBILDER = 'ohne'
-
-const instructorOptions = computed(() => [
-  { value: OHNE_AUSBILDER, label: 'Ohne Ausbilder' },
-  ...(instructorData.value?.items ?? []).map(item => ({ value: item.id, label: item.name })),
-])
 
 const durationHint = computed(() => {
   if (!state.startsOn || !state.endsOn) return ''
@@ -57,12 +40,7 @@ async function onSubmit() {
   try {
     await $fetch('/api/admin/courses', {
       method: 'POST',
-      body: {
-        ...state,
-        instructorId: state.instructorId === OHNE_AUSBILDER ? undefined : state.instructorId,
-        timeLabel: state.timeLabel || undefined,
-        location: state.location || undefined,
-      },
+      body: state,
     })
     toast.add({ title: 'Lehrgang angelegt', color: 'success' })
     open.value = false
@@ -106,32 +84,9 @@ async function onSubmit() {
           </UFormField>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
-          <UFormField label="Kategorie" name="category" required>
-            <USelect v-model="state.category" :items="categoryOptions" class="w-full" />
-          </UFormField>
-          <UFormField label="Format" name="format" required>
-            <USelect v-model="state.format" :items="formatOptions" class="w-full" />
-          </UFormField>
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-          <UFormField label="Uhrzeit (täglich)" name="timeLabel">
-            <UInput v-model="state.timeLabel" placeholder="09:00 – 12:00" class="w-full" />
-          </UFormField>
-          <UFormField label="Plätze" name="capacity" description="0 = unbegrenzt">
-            <UInput v-model.number="state.capacity" type="number" min="0" class="w-full" data-testid="course-capacity-input" />
-          </UFormField>
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-          <UFormField label="Ausbilder" name="instructorId">
-            <USelect v-model="state.instructorId" :items="instructorOptions" class="w-full" />
-          </UFormField>
-          <UFormField label="Ort" name="location">
-            <UInput v-model="state.location" placeholder="Gerätehaus" class="w-full" />
-          </UFormField>
-        </div>
+        <UFormField label="Plätze" name="capacity" required>
+          <UInput v-model.number="state.capacity" type="number" min="1" class="w-full" data-testid="course-capacity-input" />
+        </UFormField>
 
         <UFormField label="Titelbild" name="motif">
           <AdminMotifPicker
