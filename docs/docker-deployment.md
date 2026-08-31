@@ -91,13 +91,14 @@ docs
 ## docker-compose.yml
 
 Die vollständige Datei inklusive Backup-Service und optionaler Litestream-Replikation liegt unter
-`ops/docker-compose.yml`. Verkürzte Fassung ohne Backup:
+`ops/docker-compose.yml`. Der `app`-Service zieht dort ausschließlich per `docker compose pull` das
+fertig gebaute Image aus der GitHub Container Registry (gebaut in `.github/workflows/deploy.yml` bei
+jedem Push auf `main`), nie lokal gebaut. Verkürzte Fassung ohne Backup:
 
 ```yaml
 services:
   app:
-    build: .
-    image: fortbildungsverwaltung:latest
+    image: ${APP_IMAGE:-ghcr.io/sh1su/ff-barkelsby:latest}
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -162,8 +163,10 @@ NUXT_GUEST_PASSWORD=bitte-aendern
 EOF
 
 # 3. Starten - Migrationen und Konten-Seeding laufen automatisch beim ersten
-#    Start (server/plugins/bootstrap.ts), kein separater CLI-Aufruf noetig
-docker compose up -d --build
+#    Start (server/plugins/bootstrap.ts), kein separater CLI-Aufruf noetig. "pull" holt
+#    das app-Image aus der GitHub Container Registry, "--build" betrifft nur backup
+#    (baut weiterhin lokal aus ./ops, siehe ops/docker-compose.yml)
+docker compose pull && docker compose up -d --build
 
 # 4. Logs pruefen - bei Erfolg steht dort {"level":"info","msg":"bootstrap",...}
 docker compose logs -f app
@@ -293,8 +296,8 @@ Die App selbst legt zusätzlich vor jeder Datenbank-Migration automatisch einen 
 
 ```bash
 git pull
-docker compose build
-docker compose up -d          # Migrationen laufen beim Start automatisch
+docker compose pull           # zieht das neueste app-Image aus ghcr.io, baut backup lokal neu
+docker compose up -d --build
 docker compose ps             # Healthcheck muss "healthy" zeigen
 ```
 
