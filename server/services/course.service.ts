@@ -7,13 +7,14 @@ import { courseDays, courses, signups } from '../database/schema'
  * validieren -> autorisieren -> Service -> Antwort formen.
  */
 
-/** Belegung zaehlt ausschliesslich bestaetigte Anmeldungen (PRD, Q14). */
-export function isFullyBooked(capacity: number, confirmedCount: number): boolean {
-  return confirmedCount >= capacity
-}
-
-export function freeSeats(capacity: number, confirmedCount: number): number {
-  return Math.max(0, capacity - confirmedCount)
+/**
+ * Anmeldeschluss: ab dem Starttag eines Lehrgangs nimmt er keine Anmeldungen mehr an, auch wenn
+ * er (bei mehrtaegigen Lehrgaengen) noch bis zum Enddatum sichtbar bleibt (FV-14, AC-4).
+ */
+export function isSignupOpen(status: string, startsOn: Date, now: Date = new Date()): boolean {
+  const startOfToday = new Date(now)
+  startOfToday.setHours(0, 0, 0, 0)
+  return status !== 'abgesagt' && startsOn.getTime() > startOfToday.getTime()
 }
 
 /** Bestaetigte Anmeldungen je Lehrgang – eine Abfrage statt einer je Karte (FV-5, AC-11). */
@@ -36,7 +37,6 @@ const cardColumns = {
   summary: courses.summary,
   startsOn: courses.startsOn,
   endsOn: courses.endsOn,
-  capacity: courses.capacity,
   status: courses.status,
   motif: courses.motif,
   palette: courses.palette,
@@ -91,8 +91,7 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
       return {
         ...item,
         confirmedCount: bestaetigt,
-        fullyBooked: isFullyBooked(item.capacity, bestaetigt),
-        freeSeats: freeSeats(item.capacity, bestaetigt),
+        signupOpen: isSignupOpen(item.status, item.startsOn, now),
       }
     }),
     total,
@@ -138,8 +137,7 @@ export function getCourseDetail(id: string) {
   return {
     ...course,
     confirmedCount: bestaetigt,
-    fullyBooked: isFullyBooked(course.capacity, bestaetigt),
-    freeSeats: freeSeats(course.capacity, bestaetigt),
+    signupOpen: isSignupOpen(course.status, course.startsOn),
     days,
   }
 }

@@ -8,7 +8,6 @@ export interface CourseOverrides {
   title?: string
   startsOn?: string
   endsOn?: string
-  capacity?: number
   motif?: number
   palette?: number
 }
@@ -30,7 +29,6 @@ export async function createCourse(cookie: string, overrides: CourseOverrides = 
       title: 'Truppmann Grundausbildung',
       startsOn: isoInDays(14),
       endsOn: isoInDays(16),
-      capacity: 12,
       ...overrides,
     }),
     redirect: 'manual',

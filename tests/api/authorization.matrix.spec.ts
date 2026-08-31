@@ -147,7 +147,6 @@ const MATRIX: MatrixEntry[] = [
       title: 'Matrix Neuanlage',
       startsOn: isoInDays(60),
       endsOn: isoInDays(60),
-      capacity: 12,
     }),
     anonymous: 401,
     guest: 403,

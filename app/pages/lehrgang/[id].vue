@@ -4,11 +4,11 @@ const id = computed(() => String(route.params.id))
 
 const { data: course, error, refresh } = await useFetch(() => `/api/courses/${id.value}`)
 
-const { dateRange, durationLabel, seatsLabel } = useCourseFormat()
+const { dateRange, durationLabel } = useCourseFormat()
 
 useHead({ title: () => course.value?.title ?? 'Lehrgang' })
 
-const signupOpen = ref(false)
+const signupModalOpen = ref(false)
 
 const courseMeta = computed(() => {
   if (!course.value) return ''
@@ -20,9 +20,13 @@ const facts = computed(() => {
   return [
     { icon: 'i-lucide-calendar-days', label: 'Zeitraum', value: dateRange(course.value.startsOn, course.value.endsOn) },
     { icon: 'i-lucide-hourglass', label: 'Dauer', value: durationLabel(course.value.startsOn, course.value.endsOn) },
-    { icon: 'i-lucide-users', label: 'Plätze', value: seatsLabel(course.value.capacity, course.value.confirmedCount) },
+    ...(course.value.confirmedCount > 0
+      ? [{ icon: 'i-lucide-users', label: 'Anmeldungen', value: `${course.value.confirmedCount} bestätigt` }]
+      : []),
   ]
 })
+
+const anmeldungGeschlossen = computed(() => !!course.value && !course.value.signupOpen)
 </script>
 
 <template>
@@ -62,12 +66,12 @@ const facts = computed(() => {
           Abgesagt
         </UBadge>
         <UBadge
-          v-else-if="course.fullyBooked"
-          color="warning"
+          v-else-if="anmeldungGeschlossen"
+          color="neutral"
           variant="subtle"
-          data-testid="course-full-badge"
+          data-testid="course-closed-badge"
         >
-          Ausgebucht
+          Anmeldung geschlossen
         </UBadge>
       </div>
 
@@ -119,23 +123,25 @@ const facts = computed(() => {
               class="mt-5"
               block
               size="lg"
-              :disabled="course.status === 'abgesagt'"
+              :disabled="course.status === 'abgesagt' || anmeldungGeschlossen"
               data-testid="course-signup-button"
-              @click="signupOpen = true"
+              @click="signupModalOpen = true"
             >
               Interesse bekunden
             </UButton>
             <p class="mt-2 text-center text-xs text-muted">
               {{ course.status === 'abgesagt'
                 ? 'Dieser Lehrgang wurde abgesagt.'
-                : 'Kein persönliches Konto nötig · 3 Felder' }}
+                : anmeldungGeschlossen
+                  ? 'Dieser Lehrgang hat bereits begonnen und nimmt keine Anmeldungen mehr an.'
+                  : 'Kein persönliches Konto nötig · 3 Felder' }}
             </p>
           </div>
         </aside>
       </div>
 
       <SignupsSignupModal
-        v-model:open="signupOpen"
+        v-model:open="signupModalOpen"
         :course-id="course.id"
         :course-title="course.title"
         :course-meta="courseMeta"

@@ -5,6 +5,10 @@
 **Last Updated:** 2026-08-10
 **Abhängigkeiten:** FV-2 (Detailseite), FV-4 (Mailversand); Tabelle `signups` liegt bereits vor
 
+> **Hinweis (2026-09-01):** [FV-14](FV-14-plaetze-entfernen.md) hat die Platzzahl entfernt und
+> stattdessen einen Anmeldeschluss zum Starttag eingeführt – AC-5 unten ist historisch (es gibt
+> kein "ausgebucht" mehr), siehe FV-14 AC-4 für die aktuelle Regel.
+
 ## Ziel
 
 Das Herzstück des Entwurfs: Angehörige der Wehr bekunden ihr Interesse an einem Lehrgang mit drei
@@ -26,8 +30,8 @@ Eingangsbestätigung mit einem Abmelde-Link, die Wehrführung eine Benachrichtig
 - [x] **AC-3:** Ohne gesetzte Einwilligung antwortet der Server mit 400 und speichert nichts.
 - [x] **AC-4:** Eine zweite Anmeldung derselben E-Mail für denselben Lehrgang wird mit 409 und einem
       verständlichen Hinweis abgelehnt; nach einem Storno ist eine Neuanmeldung wieder möglich.
-- [x] **AC-5:** Auch ein ausgebuchter Lehrgang nimmt Interessensbekundungen an (Warteliste nach
-      Eingangsreihenfolge).
+- [x] AC-5 (entfällt seit FV-14, es gibt keine Platzzahl mehr): Auch ein ausgebuchter Lehrgang
+      nimmt Interessensbekundungen an (Warteliste nach Eingangsreihenfolge).
 - [x] **AC-6:** Ein abgesagter Lehrgang nimmt keine Anmeldung mehr an (422).
 - [x] **AC-7:** Nach dem Absenden erhält der Interessent eine Eingangsbestätigung mit Abmelde-Link,
       die Wehrführung eine Benachrichtigung; beide Versuche stehen im Mailprotokoll.

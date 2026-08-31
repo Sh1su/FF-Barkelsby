@@ -64,8 +64,6 @@ export const courses = sqliteTable(
     topics: text('topics', { mode: 'json' }).$type<string[]>(),
     startsOn: integer('starts_on', { mode: 'timestamp' }).notNull(),
     endsOn: integer('ends_on', { mode: 'timestamp' }).notNull(),
-    /** Zahl der Plaetze, > 0; belegt zaehlt nur bestaetigte Anmeldungen (FV-13, AC-7). */
-    capacity: integer('capacity').notNull(),
     motif: integer('motif'),
     palette: integer('palette'),
     status: text('status', { enum: COURSE_STATUSES }).notNull().default('geplant'),
@@ -75,7 +73,6 @@ export const courses = sqliteTable(
     index('courses_starts_on_idx').on(table.startsOn),
     index('courses_ends_on_idx').on(table.endsOn),
     check('courses_status_check', sql`${table.status} in ('geplant', 'abgesagt')`),
-    check('courses_capacity_check', sql`${table.capacity} > 0`),
     check('courses_dates_check', sql`${table.endsOn} >= ${table.startsOn}`),
   ],
 )

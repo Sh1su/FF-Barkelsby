@@ -16,7 +16,6 @@ const DEMO = [
     offset: 12,
     days: 3,
     timeLabel: '18:30 – 21:00',
-    capacity: 16,
     motif: 0,
   },
   {
@@ -27,7 +26,6 @@ const DEMO = [
     offset: 21,
     days: 1,
     timeLabel: '08:00 – 16:00',
-    capacity: 8,
     motif: 1,
   },
   {
@@ -36,7 +34,6 @@ const DEMO = [
     offset: 28,
     days: 2,
     timeLabel: '09:00 – 17:00',
-    capacity: 12,
     motif: 5,
   },
   {
@@ -45,7 +42,6 @@ const DEMO = [
     offset: 35,
     days: 2,
     timeLabel: '08:30 – 16:30',
-    capacity: 10,
     motif: 6,
   },
   {
@@ -54,7 +50,6 @@ const DEMO = [
     offset: 42,
     days: 1,
     timeLabel: '19:00 – 22:00',
-    capacity: 20,
     motif: 3,
   },
   {
@@ -63,7 +58,6 @@ const DEMO = [
     offset: 56,
     days: 3,
     timeLabel: '08:00 – 17:00',
-    capacity: 6,
     motif: 2,
   },
 ]
@@ -93,7 +87,6 @@ test('Bildstrecke für die QA', async ({ page }) => {
         title: demo.title,
         startsOn: isoInDays(demo.offset),
         endsOn: isoInDays(demo.offset + demo.days - 1),
-        capacity: demo.capacity,
         motif: demo.motif,
       },
     })).json()

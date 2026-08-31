@@ -18,7 +18,6 @@ const state = reactive({
   topics: [] as string[],
   startsOn: '',
   endsOn: '',
-  capacity: 0,
   motif: undefined as number | undefined,
   palette: undefined as number | undefined,
   days: [] as { dayNumber: number, date: string, timeLabel: string, title: string, bullets: string[] }[],
@@ -54,7 +53,6 @@ watchEffect(() => {
   state.topics = [...(course.value.topics ?? [])]
   state.startsOn = isoOf(course.value.startsOn)
   state.endsOn = isoOf(course.value.endsOn)
-  state.capacity = course.value.capacity
   state.motif = course.value.motif ?? undefined
   state.palette = course.value.palette ?? undefined
   state.days = course.value.days.map(day => ({
@@ -106,7 +104,6 @@ async function save() {
         topics: state.topics,
         startsOn: state.startsOn,
         endsOn: state.endsOn,
-        capacity: state.capacity,
         motif: state.motif ?? null,
         palette: state.palette ?? null,
         days: state.days
@@ -312,14 +309,8 @@ async function removeCourse() {
 
       <aside class="space-y-4">
         <div class="space-y-4 rounded-lg border border-default bg-default p-5">
-          <UFormField label="Beginn">
-            <UInput v-model="state.startsOn" type="date" class="w-full" />
-          </UFormField>
-          <UFormField label="Ende">
-            <UInput v-model="state.endsOn" type="date" class="w-full" />
-          </UFormField>
-          <UFormField label="Plätze">
-            <UInput v-model.number="state.capacity" type="number" min="1" class="w-full" data-testid="edit-capacity" />
+          <UFormField label="Zeitraum">
+            <AdminCourseDateRangeField v-model:starts-on="state.startsOn" v-model:ends-on="state.endsOn" />
           </UFormField>
         </div>
 

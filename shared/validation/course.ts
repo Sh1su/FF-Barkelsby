@@ -27,7 +27,6 @@ export const createCourseSchema = z
     title: z.string().trim().min(3, 'Bitte einen Titel angeben.').max(160),
     startsOn: isoDate,
     endsOn: isoDate,
-    capacity: z.coerce.number().int().min(1, 'Bitte eine Platzzahl größer 0 angeben.').max(999),
     motif: z.coerce.number().int().min(0).max(7).optional(),
     palette: z.coerce.number().int().min(0).max(3).optional(),
   })
@@ -54,7 +53,6 @@ export const updateCourseSchema = z
     topics: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
     startsOn: isoDate.optional(),
     endsOn: isoDate.optional(),
-    capacity: z.coerce.number().int().min(1, 'Bitte eine Platzzahl größer 0 angeben.').max(999).optional(),
     motif: z.coerce.number().int().min(0).max(7).nullable().optional(),
     palette: z.coerce.number().int().min(0).max(3).nullable().optional(),
     days: z.array(courseDayInputSchema).max(60).optional(),

@@ -9,6 +9,9 @@
 > Uhrzeit, Ausbilder und Ort entfernt. Alle Stellen unten, die diese Felder erwähnen (AC-2, AC-3,
 > AC-5, AC-8, Tech Design, Tabelle `instructors`), sind historisch und spiegeln nicht mehr den
 > aktuellen Stand.
+>
+> **Hinweis (2026-09-01):** [FV-14](FV-14-plaetze-entfernen.md) hat zusätzlich die Platzzahl
+> entfernt – AC-6 (Badge „ausgebucht") ist damit ebenfalls historisch.
 
 ## Ziel
 

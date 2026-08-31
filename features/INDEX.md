@@ -28,6 +28,7 @@
 | FV-11 | Farbmodus hell/dunkel | Approved | [FV-11-farbmodus.md](FV-11-farbmodus.md) | 2026-08-10 |
 | FV-12 | Konto-CLI (Kennung & Passwort) | In Progress | [FV-12-konto-cli.md](FV-12-konto-cli.md) | 2026-08-12 |
 | FV-13 | Lehrgangsfelder reduzieren | Approved | [FV-13-lehrgangsfelder-reduzieren.md](FV-13-lehrgangsfelder-reduzieren.md) | 2026-08-31 |
+| FV-14 | Plätze entfernen & Zeitraum-Kalender | In Progress | [FV-14-plaetze-entfernen.md](FV-14-plaetze-entfernen.md) | 2026-09-01 |
 
 <!-- Add features above this line -->
 
@@ -40,6 +41,7 @@
 - FV-10 setzt FV-4 und FV-6 voraus
 - FV-12 setzt FV-1 voraus (Konten, Passwort-Hashing) und ergänzt FV-7 um den Weg ohne Anmeldung
 - FV-13 reduziert das Datenmodell aus FV-2/FV-3 (Kategorie, Format, Uhrzeit, Ausbilder, Ort entfallen)
+- FV-14 setzt FV-13 voraus und reduziert zusätzlich FV-5/FV-6 (Platzzahl entfällt)
 
 ## Stand der Umsetzung (2026-08-10)
 
@@ -77,4 +79,4 @@ Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltun
 Punkten, Budgets, Zertifikaten) wurden am 2026-08-10 nach Abgleich mit dem Design verworfen und die
 Nummern neu vergeben. Begründung: `docs/PRD.md`, Abschnitt „Verworfen".
 
-## Next Available ID: FV-14
+## Next Available ID: FV-15

@@ -9,6 +9,11 @@
 > Uhrzeit, Ausbilder und Ort inkl. der Ausbilder-Verwaltung wieder entfernt. Alle Stellen unten,
 > die diese Felder erwähnen (AC-5, AC-8, Tech Design, Tabelle `instructors`), sind historisch und
 > spiegeln nicht mehr den aktuellen Stand.
+>
+> **Hinweis (2026-09-01):** [FV-14](FV-14-plaetze-entfernen.md) hat zusätzlich die Platzzahl
+> entfernt – AC-5 (Feld „Plätze") und AC-14 (Kapazitätsuntergrenze) sind damit ebenfalls
+> historisch. Der Zeitraum (Beginn/Ende) wird jetzt über einen Nuxt-UI-Kalender im
+> Bereichsmodus statt zweier Datumsfelder gewählt.
 
 ## Ziel
 
@@ -53,8 +58,8 @@ Löschen von Lehrgängen.
       die API mit 409 und dem Hinweis, stattdessen abzusagen.
 - [x] **AC-13:** Alle Schreibrouten unter `/api/admin/**` weisen Gast-Sessions mit 403 und
       nicht angemeldete Aufrufe mit 401 ab.
-- [x] **AC-14:** Die Kapazität kann nicht unter die Zahl der bereits bestätigten Anmeldungen gesenkt
-      werden (422 mit Erklärung).
+- [x] AC-14 (entfällt seit FV-14, es gibt keine Kapazität mehr): Die Kapazität kann nicht unter
+      die Zahl der bereits bestätigten Anmeldungen gesenkt werden (422 mit Erklärung).
 
 ## Edge Cases
 

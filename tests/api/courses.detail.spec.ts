@@ -78,4 +78,24 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
 
     expect(response.status).toBe(404)
   })
+
+  it('FV-14, AC-1: liefert keine Platzzahl mehr und meldet die Anmeldung als offen', async () => {
+    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
+
+    expect(data).not.toHaveProperty('capacity')
+    expect(data).not.toHaveProperty('fullyBooked')
+    expect(data).not.toHaveProperty('freeSeats')
+    expect(data.signupOpen).toBe(true)
+  })
+
+  it('FV-14, AC-4: ein bereits begonnener Lehrgang meldet die Anmeldung als geschlossen', async () => {
+    const gestern = await createCourse(adminCookie, {
+      title: 'Bereits begonnen',
+      startsOn: isoInDays(-1),
+      endsOn: isoInDays(1),
+    })
+
+    const data = await (await fetch(`/api/courses/${gestern.id}`, { headers: { cookie: guestCookie } })).json()
+    expect(data.signupOpen).toBe(false)
+  })
 })
