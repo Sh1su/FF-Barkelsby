@@ -27,7 +27,7 @@
 | FV-10 | Erinnerungsmail vor Lehrgangsbeginn | Roadmap | – | – |
 | FV-11 | Farbmodus hell/dunkel | Approved | [FV-11-farbmodus.md](FV-11-farbmodus.md) | 2026-08-10 |
 | FV-12 | Konto-CLI (Kennung & Passwort) | In Progress | [FV-12-konto-cli.md](FV-12-konto-cli.md) | 2026-08-12 |
-| FV-13 | Lehrgangsfelder reduzieren | In Progress | [FV-13-lehrgangsfelder-reduzieren.md](FV-13-lehrgangsfelder-reduzieren.md) | 2026-08-31 |
+| FV-13 | Lehrgangsfelder reduzieren | Approved | [FV-13-lehrgangsfelder-reduzieren.md](FV-13-lehrgangsfelder-reduzieren.md) | 2026-08-31 |
 
 <!-- Add features above this line -->
 

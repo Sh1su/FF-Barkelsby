@@ -1,6 +1,6 @@
 # FV-13: Lehrgangsfelder reduzieren
 
-**Status:** In Progress
+**Status:** ✅ Approved (QA bestanden, ein offener kosmetischer Befund, noch nicht deployed)
 **Created:** 2026-08-31
 **Abhängigkeiten:** FV-2 (Lehrgangskatalog), FV-3 (Admin-Kalender) – reduziert deren Datenmodell
 
@@ -87,4 +87,32 @@ Designs (siehe dortige Hinweis-Boxen). Diese Spec-Abschnitte sind jetzt historis
 **Tests:** `npm run verify` grün – 30 Testdateien, 285 Vitest-Tests, keine Abdeckungslücken (alle
 7 Acceptance Criteria von FV-13 abgedeckt, u. a. eine dedizierte Migrationsprobe für AC-7). E2E
 (`npm run test:e2e`) angepasst (`02-verwaltung.spec.ts`, `03-anmeldung.spec.ts`,
-`katalog.layout.spec.ts`, `tests/qa/screenshots.spec.ts`).
+`katalog.layout.spec.ts`, `tests/qa/screenshots.spec.ts`), alle 42 Playwright-Tests grün.
+
+---
+
+## QA Test Results
+
+**Getestet:** 2026-08-31 · `npm run verify` (Lint/Typecheck/285 Vitest-Tests/Lückenprüfung),
+`npm run test:e2e` (42 Playwright-Tests inkl. Layout-Invarianten), Bildstrecke über
+`tests/qa/screenshots.spec.ts` (16 Screenshots, Desktop/Mobil/Hell/Dunkel: Übersicht, Detailseite,
+Verwaltungskalender, Bearbeiten-Seite, Schnellanlage-Dialog, Leerzustand, Anmeldeformular,
+Registratur).
+
+`/qa` existiert in diesem Repo nicht als Command (`.claude/commands/` bzw. `.claude/rules/` fehlen
+vollständig) – dieser Durchgang wurde manuell im Sinne des in `CLAUDE.md` beschriebenen Workflows
+durchgeführt.
+
+### Acceptance Criteria
+AC-1 bis AC-7: bestanden (siehe Testtabelle oben und automatisierte Läufe).
+
+### Gefundene Befunde
+
+**BUG-13-1: „Filter zurücksetzen" spricht noch von mehreren Filtern · Severity: Low (Wortlaut)**
+- Der Leerzustand („Kein Lehrgang gefunden…") zeigt weiterhin den Button „Filter zurücksetzen",
+  obwohl seit FV-13 nur noch die Suche als Filter existiert (Kategoriefilter entfällt).
+- Rein kosmetisch, keine funktionale Auswirkung. Nicht behoben – Wortlautentscheidung, die
+  bewusst der Wehrführung überlassen bleibt statt eigenmächtig zu ändern.
+
+### Ergebnis
+Keine kritischen oder schwerwiegenden Befunde. Ein offener kosmetischer Befund (BUG-13-1).
