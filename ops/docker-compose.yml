@@ -1,13 +1,19 @@
 # Fortbildungsverwaltung - Produktions-Stack
-# Start:  docker compose up -d --build
+#
+# app: wird ausschliesslich per "docker compose pull" aus der GitHub Container Registry
+# gezogen (gebaut + getestet in .github/workflows/deploy.yml bei jedem Push auf main),
+# nie lokal gebaut. APP_IMAGE per .env ueberschreibbar, Default zeigt auf den zuletzt
+# bekannten main-Stand; fuer den aktuellsten Stand:
+#   APP_IMAGE=ghcr.io/sh1su/ff-barkelsby:latest docker compose pull app
+#
+# Start/Update:  docker compose pull && docker compose up -d --build
+# ("--build" betrifft nur backup, das weiterhin lokal aus ./ops gebaut wird)
+#
 # Diese Datei gehört im Repository nach ./docker-compose.yml (Pfade ggf. anpassen).
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: fortbildungsverwaltung:${APP_VERSION:-latest}
+    image: ${APP_IMAGE:-ghcr.io/sh1su/ff-barkelsby:sha-fc3bcda}
     restart: unless-stopped
     ports:
       - "3000:3000"
