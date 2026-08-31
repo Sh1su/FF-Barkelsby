@@ -28,7 +28,7 @@
 | FV-11 | Farbmodus hell/dunkel | Approved | [FV-11-farbmodus.md](FV-11-farbmodus.md) | 2026-08-10 |
 | FV-12 | Konto-CLI (Kennung & Passwort) | In Progress | [FV-12-konto-cli.md](FV-12-konto-cli.md) | 2026-08-12 |
 | FV-13 | Lehrgangsfelder reduzieren | Approved | [FV-13-lehrgangsfelder-reduzieren.md](FV-13-lehrgangsfelder-reduzieren.md) | 2026-08-31 |
-| FV-14 | Plätze entfernen & Zeitraum-Kalender | In Progress | [FV-14-plaetze-entfernen.md](FV-14-plaetze-entfernen.md) | 2026-09-01 |
+| FV-14 | Plätze entfernen & Zeitraum-Kalender | Approved | [FV-14-plaetze-entfernen.md](FV-14-plaetze-entfernen.md) | 2026-09-01 |
 
 <!-- Add features above this line -->
 

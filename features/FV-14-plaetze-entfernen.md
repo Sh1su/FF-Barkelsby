@@ -1,6 +1,6 @@
 # FV-14: Plätze entfernen & Zeitraum-Kalender
 
-**Status:** In Progress
+**Status:** ✅ Approved (verifiziert über `npm run verify`, e2e und QA-Bildstrecke, noch nicht deployed)
 **Created:** 2026-09-01
 **Abhängigkeiten:** FV-2 (Lehrgangskatalog), FV-3 (Admin-Kalender), FV-5 (Anmeldungen),
 FV-6 (Registratur) – reduziert deren Datenmodell weiter (nach [FV-13](FV-13-lehrgangsfelder-reduzieren.md))
@@ -80,4 +80,25 @@ eingesetzt.
 
 ## Implementierungsnotizen (2026-09-01)
 
-Wird während der Umsetzung ergänzt.
+**Gebaut:** `capacity` vollständig aus Schema, Migration, Validierung, Services und Oberfläche
+entfernt. Anmeldeschluss automatisch zum Starttag (`isSignupOpen` in `course.service.ts`),
+zusätzlich zur bestehenden Absage-Sperre. Neue `CourseDateRangeField.vue`-Komponente auf Basis
+des Nuxt-UI-Kalenders im Bereichsmodus (Doku über den neu installierten `nuxt-ui`-MCP-Server
+bzw. `ui.nuxt.com/docs/components/calendar` recherchiert) ersetzt die bisherigen zwei
+`<input type="date">`-Felder in Schnellanlage und Bearbeiten-Seite.
+
+**Werkzeug:** `nuxt-ui`-MCP-Server via `claude mcp add --transport http nuxt-ui
+https://ui.nuxt.com/mcp` installiert. Die frisch hinzugefügten Tools standen in der laufenden
+Session erst nach einem Reconnect zur Verfügung; die Kalender-Dokumentation wurde deshalb direkt
+von `ui.nuxt.com` abgerufen (inhaltlich identische Quelle).
+
+**Tests:** `npm run verify` grün (Lint, Typecheck, 289 Vitest-Tests, keine Abdeckungslücken – alle
+5 Acceptance Criteria von FV-14 abgedeckt). `npm run test:e2e` grün (39 Tests, inklusive einer
+Prüfung, dass der Kalender-Button das gewählte Datum korrekt anzeigt). QA-Bildstrecke
+(`tests/qa/screenshots.spec.ts`) visuell geprüft: Schnellanlage, Bearbeiten-Seite, Kurskarten und
+Detailseite zeigen weder Platzzahl noch die frühere Ausgebucht-Kennzeichnung.
+
+**Abweichung von der ursprünglichen Spec:** FV-2, FV-3, FV-5 und FV-6 dokumentierten die Platzzahl
+als Teil des Designs. Die betroffenen Acceptance Criteria (FV-2 AC-6, FV-3 AC-14, FV-5 AC-5,
+FV-6 AC-6) sind in den jeweiligen Specs als historisch markiert statt mit Tests für entfernte
+Funktionalität künstlich grün gehalten zu werden.
