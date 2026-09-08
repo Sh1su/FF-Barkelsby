@@ -1,8 +1,8 @@
 <script setup lang="ts">
-const { organisation } = useRuntimeConfig().public
+const { data: branding } = await useBranding()
 
 useHead({
-  title: organisation.name,
+  title: () => branding.value?.name ?? 'Fortbildungsverwaltung',
 })
 </script>
 

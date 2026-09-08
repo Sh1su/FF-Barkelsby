@@ -2,10 +2,11 @@ import { randomUUID } from 'node:crypto'
 import { and, count, desc, eq, ne } from 'drizzle-orm'
 import type { SignupStatus } from '../../shared/constants'
 import { SIGNUP_STATUS_LABELS } from '../../shared/constants'
-import { TEMPLATES } from '../../shared/mail-templates'
 import { toCsv } from '../../shared/csv'
 import { courses, mailLog, signups } from '../database/schema'
+import { getBranding } from './branding.service'
 import { formatRange } from './mail.service'
+import { renderMail } from './mail-templates.service'
 
 /**
  * Registratur der Verwaltung (FV-6).
@@ -158,10 +159,10 @@ async function notifySignup(
   const config = useRuntimeConfig()
   const cancelUrl = `${String(config.public.baseUrl).replace(/\/$/, '')}/abmeldung/${signup.cancelToken}`
 
-  const mail = TEMPLATES[template]({
+  const mail = renderMail(template, {
     courseTitle: course.title,
     dateRange: formatRange(course.startsOn, course.endsOn),
-    organisation: config.public.organisation.name,
+    organisation: getBranding().name,
     recipientFirstName: signup.firstName,
     // Die Absage braucht keinen Abmelde-Link mehr.
     cancelUrl: template === 'anmeldung-bestaetigt' ? cancelUrl : undefined,

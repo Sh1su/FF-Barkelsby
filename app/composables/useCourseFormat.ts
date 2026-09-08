@@ -34,5 +34,5 @@ export function useCourseFormat() {
     return days <= 1 ? 'Ein Tag' : `${days} Tage`
   }
 
-  return { dateRange, dayBadge, durationLabel, fullDate }
+  return { dateRange, dayBadge, durationLabel }
 }

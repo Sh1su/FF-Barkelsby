@@ -29,6 +29,27 @@
       "when": 1788213867100,
       "tag": "0003_breezy_moonstone",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788884640267,
+      "tag": "0004_awesome_stature",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788885612416,
+      "tag": "0005_aberrant_sphinx",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788886849622,
+      "tag": "0006_fine_misty_knight",
+      "breakpoints": true
     }
   ]
 }

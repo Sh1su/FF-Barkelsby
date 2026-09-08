@@ -61,7 +61,6 @@ export const courses = sqliteTable(
     title: text('title').notNull(),
     summary: text('summary'),
     description: text('description'),
-    topics: text('topics', { mode: 'json' }).$type<string[]>(),
     startsOn: integer('starts_on', { mode: 'timestamp' }).notNull(),
     endsOn: integer('ends_on', { mode: 'timestamp' }).notNull(),
     motif: integer('motif'),
@@ -75,24 +74,6 @@ export const courses = sqliteTable(
     check('courses_status_check', sql`${table.status} in ('geplant', 'abgesagt')`),
     check('courses_dates_check', sql`${table.endsOn} >= ${table.startsOn}`),
   ],
-)
-
-/** Programm eines Lehrgangs, ein Datensatz je Tag. */
-export const courseDays = sqliteTable(
-  'course_days',
-  {
-    id: text('id').primaryKey(),
-    courseId: text('course_id')
-      .notNull()
-      .references(() => courses.id, { onDelete: 'cascade' }),
-    dayNumber: integer('day_number').notNull(),
-    date: integer('date', { mode: 'timestamp' }),
-    timeLabel: text('time_label'),
-    title: text('title').notNull(),
-    bullets: text('bullets', { mode: 'json' }).$type<string[]>(),
-    ...timestamps,
-  },
-  table => [uniqueIndex('course_days_course_day_unique').on(table.courseId, table.dayNumber)],
 )
 
 /**
@@ -161,3 +142,44 @@ export const signups = sqliteTable(
     ),
   ],
 )
+
+/**
+ * Erscheinungsbild der Wehr, ueber die Verwaltung editierbar. Genau eine Zeile (`id = 'default'`)
+ * – ohne sie gelten die Standardwerte aus `runtimeConfig.public.organisation` und das
+ * mitgelieferte `public/logo.png` (siehe `branding.service.ts`).
+ */
+export const brandingSettings = sqliteTable('branding_settings', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  shortName: text('short_name').notNull(),
+  logoData: text('logo_data'),
+  logoMime: text('logo_mime'),
+  ...timestamps,
+})
+
+/**
+ * SMTP-Relay, ueber die Verwaltung editierbar (loest die bisherigen NUXT_SMTP_*-Env-Variablen
+ * ab, siehe `mail-settings.service.ts`). Genau eine Zeile (`id = 'default'`). Das Passwort steht
+ * nie im Klartext in der Datenbank (`server/utils/crypto.ts`).
+ */
+/**
+ * Angepasste E-Mail-Vorlagen (Verwaltung, Einstellungen) – eine Zeile je individualisierter
+ * Vorlage (`key` ist einer der `MailTemplate`-Werte aus `shared/mail-templates.ts`). Ohne Zeile
+ * gilt der zugehoerige Eintrag aus `DEFAULT_TEMPLATES`, siehe `mail-templates.service.ts`.
+ */
+export const mailTemplates = sqliteTable('mail_templates', {
+  key: text('key').primaryKey(),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  ...timestamps,
+})
+
+export const mailSettings = sqliteTable('mail_settings', {
+  id: text('id').primaryKey(),
+  host: text('host').notNull().default(''),
+  port: integer('port').notNull().default(587),
+  user: text('user').notNull().default(''),
+  passwordEncrypted: text('password_encrypted'),
+  fromAddress: text('from_address').notNull().default(''),
+  ...timestamps,
+})

@@ -36,26 +36,16 @@ export const createCourseSchema = z
   })
 export type CreateCourseInput = z.infer<typeof createCourseSchema>
 
-export const courseDayInputSchema = z.object({
-  dayNumber: z.coerce.number().int().min(1).max(60),
-  date: isoDate.optional(),
-  timeLabel: z.string().trim().max(60).optional(),
-  title: z.string().trim().min(1).max(160),
-  bullets: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
-})
-
-/** Detail-Bearbeitung (FV-3, AC-8/AC-9). */
+/** Detail-Bearbeitung (FV-3, AC-8). */
 export const updateCourseSchema = z
   .object({
     title: z.string().trim().min(3).max(160).optional(),
     summary: z.string().trim().max(300).optional(),
     description: z.string().trim().max(5000).optional(),
-    topics: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
     startsOn: isoDate.optional(),
     endsOn: isoDate.optional(),
     motif: z.coerce.number().int().min(0).max(7).nullable().optional(),
     palette: z.coerce.number().int().min(0).max(3).nullable().optional(),
-    days: z.array(courseDayInputSchema).max(60).optional(),
     /** Optimistisches Sperren: Stand, den der Client geladen hat. */
     updatedAt: z.coerce.number().int().optional(),
   })

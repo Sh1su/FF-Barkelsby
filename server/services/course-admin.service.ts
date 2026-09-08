@@ -5,7 +5,7 @@ import type {
   UpdateCourseInput,
 } from '../../shared/validation/course'
 import type { CourseStatus } from '../../shared/constants'
-import { courseDays, courses, signups } from '../database/schema'
+import { courses, signups } from '../database/schema'
 import { formatRange, notifyCourseRecipients } from './mail.service'
 
 /**
@@ -111,41 +111,20 @@ export async function updateCourse(id: string, input: UpdateCourseInput) {
     })
   }
 
-  db.transaction((tx) => {
-    tx.update(courses)
-      .set({
-        title: input.title ?? existing.title,
-        summary: input.summary ?? existing.summary,
-        description: input.description ?? existing.description,
-        topics: input.topics ?? existing.topics,
-        startsOn,
-        endsOn,
-        motif: input.motif === undefined ? existing.motif : input.motif,
-        palette: input.palette === undefined ? existing.palette : input.palette,
-        updatedAt: new Date(),
-      })
-      .where(eq(courses.id, id))
-      .run()
-
-    if (input.days) {
-      // Programmtage werden als Ganzes ersetzt – so bleibt die Reihenfolge eindeutig.
-      tx.delete(courseDays).where(eq(courseDays.courseId, id)).run()
-
-      for (const day of input.days) {
-        tx.insert(courseDays)
-          .values({
-            id: randomUUID(),
-            courseId: id,
-            dayNumber: day.dayNumber,
-            date: day.date ? parseDate(day.date) : null,
-            timeLabel: day.timeLabel,
-            title: day.title,
-            bullets: day.bullets ?? null,
-          })
-          .run()
-      }
-    }
-  })
+  db
+    .update(courses)
+    .set({
+      title: input.title ?? existing.title,
+      summary: input.summary ?? existing.summary,
+      description: input.description ?? existing.description,
+      startsOn,
+      endsOn,
+      motif: input.motif === undefined ? existing.motif : input.motif,
+      palette: input.palette === undefined ? existing.palette : input.palette,
+      updatedAt: new Date(),
+    })
+    .where(eq(courses.id, id))
+    .run()
 
   const updated = requireCourse(id)
 

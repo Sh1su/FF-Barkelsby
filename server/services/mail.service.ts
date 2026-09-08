@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { and, eq, inArray } from 'drizzle-orm'
 import type { CourseMailData, MailTemplate } from '../../shared/mail-templates'
-import { TEMPLATES } from '../../shared/mail-templates'
 import { mailLog, signups } from '../database/schema'
+import { getBranding } from './branding.service'
+import { renderMail } from './mail-templates.service'
 
 /**
  * Versand der Lehrgangs-E-Mails (FV-4).
@@ -82,16 +83,15 @@ export async function notifyCourseRecipients(
   course: CourseForMail,
   extra: Partial<CourseMailData> = {},
 ): Promise<{ sent: number, failed: number, skipped: number }> {
-  const organisation = useRuntimeConfig().public.organisation.name
+  const organisation = getBranding().name
   const recipients = recipientsFor(course.id)
-  const render = TEMPLATES[template]
 
   let sent = 0
   let failed = 0
   let skipped = 0
 
   for (const recipient of recipients) {
-    const mail = render({
+    const mail = renderMail(template, {
       courseTitle: course.title,
       dateRange: formatRange(course.startsOn, course.endsOn),
       organisation,

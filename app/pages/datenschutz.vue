@@ -2,7 +2,7 @@
 /** Statische Datenschutzseite für den Link in der Einwilligung (FV-5; ausgebaut in FV-8). */
 definePageMeta({ layout: 'blank' })
 
-const { organisation } = useRuntimeConfig().public
+const { data: branding } = await useBranding()
 useHead({ title: 'Datenschutz' })
 </script>
 
@@ -50,7 +50,7 @@ useHead({ title: 'Datenschutz' })
           Wer verantwortlich ist
         </h2>
         <p>
-          {{ organisation.name }}. Für Auskunft, Berichtigung oder Löschung wenden Sie sich bitte an
+          {{ branding?.name }}. Für Auskunft, Berichtigung oder Löschung wenden Sie sich bitte an
           die Wehrführung.
         </p>
       </section>

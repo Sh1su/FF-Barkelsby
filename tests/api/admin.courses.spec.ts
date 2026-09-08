@@ -115,14 +115,13 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
 })
 
 describe('FV-3 Admin-Kalender – Bearbeiten', () => {
-  it('AC-8: speichert Beschreibung und Themen', async () => {
+  it('AC-8: speichert Beschreibung', async () => {
     const course = await createCourse(adminCookie)
 
     const response = await admin(`/api/admin/courses/${course.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
         description: 'Ausführliche Beschreibung.',
-        topics: ['Thema A', 'Thema B'],
       }),
     })
 
@@ -130,41 +129,23 @@ describe('FV-3 Admin-Kalender – Bearbeiten', () => {
 
     const detail = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
     expect(detail.description).toBe('Ausführliche Beschreibung.')
-    expect(detail.topics).toEqual(['Thema A', 'Thema B'])
   })
 
-  it('AC-9: speichert Programmtage in der übergebenen Reihenfolge', async () => {
+  it('AC-9: mitgeschickte Themen und Programmtage werden ignoriert – es gibt die Felder nicht mehr', async () => {
     const course = await createCourse(adminCookie)
 
-    await admin(`/api/admin/courses/${course.id}`, {
+    const response = await admin(`/api/admin/courses/${course.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
-        days: [
-          { dayNumber: 1, title: 'Erster Tag' },
-          { dayNumber: 2, title: 'Zweiter Tag' },
-          { dayNumber: 3, title: 'Dritter Tag' },
-        ],
+        topics: ['Thema A'],
+        days: [{ dayNumber: 1, title: 'Erster Tag' }],
       }),
     })
 
-    // Umsortieren: der dritte Tag wird zum ersten.
-    await admin(`/api/admin/courses/${course.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        days: [
-          { dayNumber: 1, title: 'Dritter Tag' },
-          { dayNumber: 2, title: 'Erster Tag' },
-          { dayNumber: 3, title: 'Zweiter Tag' },
-        ],
-      }),
-    })
-
-    const detail = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
-    expect(detail.days.map((day: { title: string }) => day.title)).toEqual([
-      'Dritter Tag',
-      'Erster Tag',
-      'Zweiter Tag',
-    ])
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body).not.toHaveProperty('topics')
+    expect(body).not.toHaveProperty('days')
   })
 
   it('AC-6: weist beim Bearbeiten ein Ende vor dem Beginn ab', async () => {

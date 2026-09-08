@@ -1,17 +1,17 @@
 <script setup lang="ts">
-const { organisation } = useRuntimeConfig().public
+const { data: branding } = await useBranding()
 const { logout } = useAuth()
 </script>
 
 <template>
   <div class="min-h-screen">
-    <header class="sticky top-0 z-20 border-b border-default bg-navy-950 text-white">
+    <header class="sticky top-0 z-20 border-b border-default dark:bg-navy-950 bg-navy-50 dark:text-white text-navy-950">
       <div class="mx-auto flex max-w-[1180px] items-center gap-4 px-6 py-3.5">
-        <NuxtLink to="/verwaltung" class="flex items-center gap-3 text-white no-underline">
+        <NuxtLink to="/verwaltung" class="flex items-center gap-3 dark:text-white text-navy-950 no-underline">
           <span
             class="flex size-9.5 items-center justify-center rounded-[10px] bg-fire-600 text-sm font-semibold"
             aria-hidden="true"
-          >{{ organisation.shortName }}</span>
+          >{{ branding?.shortName }}</span>
           <span class="text-base font-semibold">Verwaltung</span>
         </NuxtLink>
 
@@ -21,7 +21,7 @@ const { logout } = useAuth()
             to="/"
             variant="ghost"
             color="neutral"
-            class="text-white hover:bg-default/10"
+            class="dark:text-white text-navy-950 hover:bg-default/10"
             icon="i-lucide-external-link"
           >
             Zur Übersicht
@@ -29,7 +29,7 @@ const { logout } = useAuth()
           <UButton
             variant="ghost"
             color="neutral"
-            class="text-white hover:bg-default/10"
+            class="dark:text-white text-navy-950 hover:bg-default/10"
             icon="i-lucide-log-out"
             data-testid="logout-button"
             @click="logout()"

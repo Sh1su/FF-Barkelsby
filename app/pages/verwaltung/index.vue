@@ -6,6 +6,7 @@ const tabs = [
   { value: 'kalender', label: 'Kalender', icon: 'i-lucide-calendar' },
   { value: 'registratur', label: 'Registratur', icon: 'i-lucide-clipboard-list' },
   { value: 'benutzer', label: 'Benutzerverwaltung', icon: 'i-lucide-users' },
+  { value: 'einstellungen', label: 'Einstellungen', icon: 'i-lucide-settings' },
 ]
 const tab = ref('kalender')
 
@@ -121,6 +122,8 @@ const { dateRange } = useCourseFormat()
     </template>
 
     <AdminSignupRegistry v-else-if="tab === 'registratur'" />
+
+    <AdminSettingsPanel v-else-if="tab === 'einstellungen'" />
 
     <AdminUserRegistry v-else />
 

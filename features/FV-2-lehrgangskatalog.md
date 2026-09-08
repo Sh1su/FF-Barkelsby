@@ -12,6 +12,10 @@
 >
 > **Hinweis (2026-09-01):** [FV-14](FV-14-plaetze-entfernen.md) hat zusätzlich die Platzzahl
 > entfernt – AC-6 (Badge „ausgebucht") ist damit ebenfalls historisch.
+>
+> **Hinweis (2026-09-08):** Themenliste und Programm je Tag sind vollständig entfernt (Migration
+> `0004_awesome_stature.sql`) – AC-8 ist in diesen beiden Punkten historisch, die Detailseite zeigt
+> nur noch Beschreibung und Faktenbox.
 
 ## Ziel
 

@@ -23,11 +23,6 @@ beforeAll(async () => {
     headers: { 'content-type': 'application/json', cookie: adminCookie },
     body: JSON.stringify({
       description: 'Grundlagen für neue Einsatzkräfte.',
-      topics: ['Rechtsgrundlagen', 'Fahrzeugkunde'],
-      days: [
-        { dayNumber: 1, date: isoInDays(14), timeLabel: '18:30 – 21:00', title: 'Theorie', bullets: ['Recht', 'Technik'] },
-        { dayNumber: 2, date: isoInDays(15), timeLabel: '09:00 – 16:00', title: 'Praxis' },
-      ],
     }),
     redirect: 'manual',
   })
@@ -43,16 +38,13 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
     expect(response.status).toBe(401)
   })
 
-  it('AC-8: liefert Beschreibung, Themen und Programm', async () => {
+  it('AC-8: liefert die Beschreibung', async () => {
     const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
 
     expect(data.description).toBe('Grundlagen für neue Einsatzkräfte.')
-    expect(data.topics).toEqual(['Rechtsgrundlagen', 'Fahrzeugkunde'])
-    expect(data.days).toHaveLength(2)
-    expect(data.days[0]).toMatchObject({ dayNumber: 1, title: 'Theorie', bullets: ['Recht', 'Technik'] })
   })
 
-  it('FV-13, AC-3: liefert keine Kategorie/Format/Ausbilder/Uhrzeit/Ort mehr', async () => {
+  it('FV-13, AC-3: liefert keine Kategorie/Format/Ausbilder/Uhrzeit/Ort/Themen/Programm mehr', async () => {
     const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
 
     expect(data).not.toHaveProperty('category')
@@ -60,14 +52,14 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
     expect(data).not.toHaveProperty('timeLabel')
     expect(data).not.toHaveProperty('location')
     expect(data).not.toHaveProperty('instructor')
+    expect(data).not.toHaveProperty('topics')
+    expect(data).not.toHaveProperty('days')
   })
 
-  it('AC-8: ein schnell angelegter Lehrgang liefert leere Abschnitte statt Platzhaltertexten', async () => {
+  it('AC-8: ein schnell angelegter Lehrgang liefert eine leere Beschreibung statt Platzhaltertext', async () => {
     const data = await (await fetch(`/api/courses/${bareCourseId}`, { headers: { cookie: guestCookie } })).json()
 
     expect(data.description).toBeNull()
-    expect(data.topics).toBeNull()
-    expect(data.days).toEqual([])
   })
 
   it('AC-8: liefert für einen unbekannten Lehrgang 404', async () => {

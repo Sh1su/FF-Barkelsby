@@ -81,26 +81,14 @@ const anmeldungGeschlossen = computed(() => !!course.value && !course.value.sign
 
       <div class="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div class="space-y-6">
-          <section v-if="course.description || course.topics?.length" data-testid="course-description">
+          <section v-if="course.description" data-testid="course-description">
             <h2 class="text-lg font-semibold text-highlighted">
               Über den Lehrgang
             </h2>
-            <p v-if="course.description" class="mt-2 text-default">
+            <p class="mt-2 text-default">
               {{ course.description }}
             </p>
-            <ul v-if="course.topics?.length" class="mt-4 grid gap-2 sm:grid-cols-2">
-              <li
-                v-for="topic in course.topics"
-                :key="topic"
-                class="flex items-start gap-2 rounded-lg border border-default bg-default p-3 text-sm text-default"
-              >
-                <UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-fire-600" />
-                <span>{{ topic }}</span>
-              </li>
-            </ul>
           </section>
-
-          <CoursesCourseProgram v-if="course.days.length" :days="course.days" />
         </div>
 
         <aside class="space-y-4">

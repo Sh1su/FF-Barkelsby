@@ -3,7 +3,7 @@ import { loginSchema, type LoginInput } from '#shared/validation/auth'
 
 definePageMeta({ layout: 'blank' })
 
-const { organisation } = useRuntimeConfig().public
+const { data: branding } = await useBranding()
 const route = useRoute()
 const { fetch: refreshSession } = useUserSession()
 
@@ -40,24 +40,27 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-navy-950 px-6 py-12 dark:bg-navy-950">
+  <div class="flex min-h-screen items-center justify-center bg-navy-50 px-6 py-12 dark:bg-navy-950">
     <div class="w-full max-w-md">
       <div class="mb-3 flex justify-end">
         <ColorModeToggle />
       </div>
-      <div class="rounded-lg bg-default p-8 shadow-xl">
+      <div class="rounded-lg bg-default p-8 shadow-xl relative">
         <div
-          class="mb-6 flex size-11 items-center justify-center rounded-[10px] bg-fire-600 text-base font-semibold text-white"
+          class="mb-6 flex size-50 items-center justify-center rounded-[10px] absolute -top-25 -left-25"
           aria-hidden="true"
         >
-          {{ organisation.shortName }}
+          <img :src="branding?.logoUrl ?? '/logo.png'" alt="">
+        </div>
+        <div class="size-11">
+
         </div>
 
         <h1 class="text-2xl font-semibold text-highlighted">
           Anmeldung
         </h1>
         <p class="mt-2 text-sm text-toned">
-          {{ organisation.name }} – Zugang für Angehörige der Wehr und die Wehrführung.
+          {{ branding?.name }} – Zugang für Angehörige der Wehr und die Wehrführung.
         </p>
 
         <UForm

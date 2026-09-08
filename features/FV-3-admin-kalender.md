@@ -14,6 +14,10 @@
 > entfernt – AC-5 (Feld „Plätze") und AC-14 (Kapazitätsuntergrenze) sind damit ebenfalls
 > historisch. Der Zeitraum (Beginn/Ende) wird jetzt über einen Nuxt-UI-Kalender im
 > Bereichsmodus statt zweier Datumsfelder gewählt.
+>
+> **Hinweis (2026-09-08):** Themen und Programmtage (`course_days`) sind vollständig entfernt –
+> Migration `0004_awesome_stature.sql`. AC-8 (Themen) und AC-9 (Programmtage) sind historisch; ein
+> mitgeschicktes `topics`/`days` wird von der API stillschweigend ignoriert.
 
 ## Ziel
 
