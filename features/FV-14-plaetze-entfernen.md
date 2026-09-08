@@ -102,3 +102,32 @@ Detailseite zeigen weder Platzzahl noch die frühere Ausgebucht-Kennzeichnung.
 als Teil des Designs. Die betroffenen Acceptance Criteria (FV-2 AC-6, FV-3 AC-14, FV-5 AC-5,
 FV-6 AC-6) sind in den jeweiligen Specs als historisch markiert statt mit Tests für entfernte
 Funktionalität künstlich grün gehalten zu werden.
+
+## Bugfix (2026-09-08)
+
+**Gemeldet:** Der Zeitraum-Kalender aus `CourseDateRangeField.vue` (AC-2) konnte nur den Starttag
+darstellen – ein zweiter Klick auf ein späteres Datum eröffnete immer einen neuen eintägigen
+Bereich, statt das bestehende Ende zu erweitern.
+
+**Ursache:** `range` war ein `computed({ get, set })` direkt auf `startsOn`/`endsOn`. Der
+`set()`-Handler spiegelte nach dem ersten Klick sofort `endsOn = startsOn` zurück (gewollt: "ein
+Klick = ein Tag"). Dadurch sah `UCalendar` bei jedem Lesezugriff bereits einen abgeschlossenen
+Bereich (`start` und `end` beide gesetzt) und behandelte den nächsten Klick als neue Auswahl statt
+als Erweiterung des bestehenden Endes.
+
+**Fix:** eigener `shallowRef` als Kalenderzustand, der `end: undefined` zwischen erstem und
+zweitem Klick tatsächlich haelt; die Ein-Klick-ein-Tag-Regel spiegelt nur noch einwegig nach
+`startsOn`/`endsOn` (mit Schutz gegen Rückkopplung der eigenen Schreibvorgänge). Verhalten von
+AC-2 unveraendert, jetzt aber auch für mehrtägige Bereiche per zweitem Klick nutzbar.
+
+**Regressionsfund dabei:** `isSignupOpen`/`listUpcomingCourses` in `course.service.ts` berechneten
+den Tagesbeginn über `setHours(0, 0, 0, 0)` – das rundet in der lokalen Zeitzone des Servers,
+während `startsOn`/`endsOn` laut `parseDate` (`course-admin.service.ts`) grundsätzlich in UTC
+gespeichert werden. In Zeitzonen mit positivem UTC-Offset (z. B. Europe/Berlin im Sommer) lag der
+lokale Tagesbeginn dadurch vor dem UTC-Termin des Starttags selbst – der Anmeldeschluss aus AC-4
+griff am Starttag nicht (`tests/api/signups.spec.ts`, "am Starttag selbst nimmt der Lehrgang keine
+Anmeldung mehr an" schlug fehl: 201 statt 422). Behoben durch einen gemeinsamen
+`startOfUtcDay()`-Helfer, der wie `parseDate` in UTC rechnet statt in lokaler Zeit.
+
+**Tests:** `npm run verify` grün (Lint, Typecheck, 289 Vitest-Tests, keine Abdeckungslücken).
+`npx playwright test tests/e2e/` grün (20 Tests).
