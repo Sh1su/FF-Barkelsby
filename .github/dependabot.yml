@@ -12,3 +12,9 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # @typescript-eslint unterstuetzt TS 7 noch nicht (Peer-Range "<6.1.0"),
+      # siehe ffdb79b und Session vom 2026-09-09. Erst wieder erlauben, wenn
+      # @typescript-eslint einen TS-7-kompatiblen Major veroeffentlicht hat.
+      - dependency-name: "typescript"
+        versions: [">=6.1.0"]
