@@ -1,9 +1,12 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import { and, count, eq, ne } from 'drizzle-orm'
 import type { CreateSignupInput } from '../../shared/validation/signup'
+import type { CourseMailData } from '../../shared/mail-templates'
 import { courses, mailLog, signups } from '../database/schema'
-import { TEMPLATES } from '../../shared/mail-templates'
+import { getBranding } from './branding.service'
 import { formatRange } from './mail.service'
+import { renderMail } from './mail-templates.service'
+import { isSignupOpen } from './course.service'
 
 /**
  * Interessensbekundung ohne persoenliches Konto (FV-5).
@@ -37,6 +40,14 @@ export async function createSignup(courseId: string, input: CreateSignupInput) {
     throw createError({
       statusCode: 422,
       statusMessage: 'Dieser Lehrgang wurde abgesagt und nimmt keine Anmeldungen mehr an.',
+    })
+  }
+
+  // Es gibt keine Platzzahl - Anmeldungen sind offen, bis der Lehrgang beginnt (FV-14, AC-4).
+  if (!isSignupOpen(course.status, course.startsOn)) {
+    throw createError({
+      statusCode: 422,
+      statusMessage: 'Dieser Lehrgang hat bereits begonnen und nimmt keine Anmeldungen mehr an.',
     })
   }
 
@@ -101,7 +112,7 @@ async function sendSignupMails(
   signup: SignupForMail,
 ): Promise<void> {
   const config = useRuntimeConfig()
-  const organisation = config.public.organisation.name
+  const organisation = getBranding().name
   const cancelUrl = `${String(config.public.baseUrl).replace(/\/$/, '')}/abmeldung/${signup.cancelToken}`
 
   const basis = {
@@ -116,8 +127,9 @@ async function sendSignupMails(
     cancelUrl,
   })
 
-  // Die Wehrfuehrung bekommt eine eigene Nachricht an die Absenderadresse der Anlage.
-  const wehrfuehrung = String(config.smtpFrom ?? '').trim()
+  // Die Wehrfuehrung bekommt eine eigene Nachricht an die Absenderadresse der Anlage
+  // (Einstellungen-Seite, sonst NUXT_SMTP_FROM – dieselbe Priorität wie beim Versand selbst).
+  const wehrfuehrung = readMailConfig()?.from ?? ''
   if (wehrfuehrung) {
     await deliver('anmeldung-neu', wehrfuehrung, course.id, signup.id, {
       ...basis,
@@ -133,9 +145,9 @@ async function deliver(
   recipient: string,
   courseId: string,
   signupId: string,
-  data: Parameters<(typeof TEMPLATES)[typeof template]>[0],
+  data: CourseMailData,
 ) {
-  const mail = TEMPLATES[template](data)
+  const mail = renderMail(template, data)
 
   const ergebnis = isMailEnabled()
     ? await sendMail({ to: recipient, subject: mail.subject, text: mail.text })

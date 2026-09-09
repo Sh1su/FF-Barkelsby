@@ -9,19 +9,18 @@ const BASE = {
   summary: 'Grundlagen für neue Einsatzkräfte.',
   startsOn: '2026-09-11T00:00:00.000Z',
   endsOn: '2026-09-13T00:00:00.000Z',
-  capacity: 12,
   confirmedCount: 3,
-  fullyBooked: false,
+  signupOpen: true,
   status: 'geplant' as const,
 }
 
 describe('FV-2 Lehrgangskatalog – CourseCard', () => {
-  it('AC-5: zeigt Titel, Zeitraum und Belegung', async () => {
+  it('AC-5: zeigt Titel, Zeitraum und Anmeldungen', async () => {
     const component = await mountSuspended(CourseCard, { props: { course: BASE } })
     const text = component.text()
 
     expect(text).toContain('Truppmann Grundausbildung')
-    expect(text).toContain('3 von 12 Plätzen belegt')
+    expect(text).toContain('3 Anmeldungen bestätigt')
     expect(component.find('[data-testid="course-date-badge"]').text()).toContain('11')
   })
 
@@ -32,28 +31,37 @@ describe('FV-2 Lehrgangskatalog – CourseCard', () => {
     expect(component.text()).not.toContain('Oberbrandmeisterin')
   })
 
+  it('FV-14, AC-1: zeigt keine Platzzahl mehr', async () => {
+    const component = await mountSuspended(CourseCard, {
+      props: { course: { ...BASE, confirmedCount: 0 } },
+    })
+
+    expect(component.find('[data-testid="course-signups"]').exists()).toBe(false)
+    expect(component.text()).not.toContain('Plätzen')
+  })
+
   it('AC-5: bindet das generierte Titelbild ein statt einer Bilddatei', async () => {
     const component = await mountSuspended(CourseCard, { props: { course: BASE } })
 
     expect(component.find('img').attributes('src')).toBe('/api/courses/kurs-1/cover.svg')
   })
 
-  it('AC-6: zeigt das Badge "Ausgebucht", wenn alle Plätze bestätigt belegt sind', async () => {
+  it('FV-14, AC-4: zeigt das Badge "Anmeldung geschlossen", wenn der Lehrgang schon begonnen hat', async () => {
     const component = await mountSuspended(CourseCard, {
-      props: { course: { ...BASE, confirmedCount: 12, fullyBooked: true } },
+      props: { course: { ...BASE, signupOpen: false } },
     })
 
-    expect(component.find('[data-testid="course-full-badge"]').exists()).toBe(true)
-    expect(component.text()).toContain('12 von 12 Plätzen belegt')
+    expect(component.find('[data-testid="course-closed-badge"]').exists()).toBe(true)
+    expect(component.text()).toContain('Anmeldung geschlossen')
   })
 
   it('AC-7: markiert einen abgesagten Lehrgang', async () => {
     const component = await mountSuspended(CourseCard, {
-      props: { course: { ...BASE, status: 'abgesagt' as const } },
+      props: { course: { ...BASE, status: 'abgesagt' as const, signupOpen: false } },
     })
 
     expect(component.find('[data-testid="course-cancelled-badge"]').exists()).toBe(true)
-    expect(component.find('[data-testid="course-full-badge"]').exists()).toBe(false)
+    expect(component.find('[data-testid="course-closed-badge"]').exists()).toBe(false)
   })
 
   it('AC-5: verlinkt auf die Detailseite', async () => {

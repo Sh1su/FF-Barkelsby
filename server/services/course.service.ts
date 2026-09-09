@@ -1,19 +1,29 @@
 import { and, asc, count, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import type { CourseListQuery } from '../../shared/validation/course'
-import { courseDays, courses, signups } from '../database/schema'
+import { courses, signups } from '../database/schema'
 
 /**
  * Fachlogik rund um Lehrgänge. Die Routen bleiben duenn:
  * validieren -> autorisieren -> Service -> Antwort formen.
  */
 
-/** Belegung zaehlt ausschliesslich bestaetigte Anmeldungen (PRD, Q14). */
-export function isFullyBooked(capacity: number, confirmedCount: number): boolean {
-  return confirmedCount >= capacity
+/**
+ * Tagesbeginn in UTC – Termine werden ausschliesslich in UTC gespeichert und verglichen
+ * (siehe `parseDate` in `course-admin.service.ts`). `setHours(0, 0, 0, 0)` würde stattdessen in
+ * der lokalen Zeitzone des Servers runden; in Zeitzonen mit positivem UTC-Offset (z. B.
+ * Europe/Berlin im Sommer) läge der lokale Tagesbeginn dann vor dem gespeicherten UTC-Termin des
+ * Starttags selbst, wodurch der Anmeldeschluss am Starttag zu spät griffe.
+ */
+function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
 }
 
-export function freeSeats(capacity: number, confirmedCount: number): number {
-  return Math.max(0, capacity - confirmedCount)
+/**
+ * Anmeldeschluss: ab dem Starttag eines Lehrgangs nimmt er keine Anmeldungen mehr an, auch wenn
+ * er (bei mehrtaegigen Lehrgaengen) noch bis zum Enddatum sichtbar bleibt (FV-14, AC-4).
+ */
+export function isSignupOpen(status: string, startsOn: Date, now: Date = new Date()): boolean {
+  return status !== 'abgesagt' && startsOn.getTime() > startOfUtcDay(now).getTime()
 }
 
 /** Bestaetigte Anmeldungen je Lehrgang – eine Abfrage statt einer je Karte (FV-5, AC-11). */
@@ -36,7 +46,6 @@ const cardColumns = {
   summary: courses.summary,
   startsOn: courses.startsOn,
   endsOn: courses.endsOn,
-  capacity: courses.capacity,
   status: courses.status,
   motif: courses.motif,
   palette: courses.palette,
@@ -50,8 +59,7 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
   const db = useDatabase()
 
   // Ein Lehrgang bleibt sichtbar, solange sein Enddatum nicht vorbei ist.
-  const startOfToday = new Date(now)
-  startOfToday.setHours(0, 0, 0, 0)
+  const startOfToday = startOfUtcDay(now)
 
   const conditions = [gte(courses.endsOn, startOfToday)]
 
@@ -91,8 +99,7 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
       return {
         ...item,
         confirmedCount: bestaetigt,
-        fullyBooked: isFullyBooked(item.capacity, bestaetigt),
-        freeSeats: freeSeats(item.capacity, bestaetigt),
+        signupOpen: isSignupOpen(item.status, item.startsOn, now),
       }
     }),
     total,
@@ -101,7 +108,7 @@ export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date
   }
 }
 
-/** Detailseite inkl. Programm (FV-2, AC-8). */
+/** Detailseite (FV-2, AC-8). */
 export function getCourseDetail(id: string) {
   const db = useDatabase()
 
@@ -109,7 +116,6 @@ export function getCourseDetail(id: string) {
     .select({
       ...cardColumns,
       description: courses.description,
-      topics: courses.topics,
     })
     .from(courses)
     .where(eq(courses.id, id))
@@ -119,28 +125,12 @@ export function getCourseDetail(id: string) {
     throw createError({ statusCode: 404, statusMessage: 'Lehrgang nicht gefunden.' })
   }
 
-  const days = db
-    .select({
-      id: courseDays.id,
-      dayNumber: courseDays.dayNumber,
-      date: courseDays.date,
-      timeLabel: courseDays.timeLabel,
-      title: courseDays.title,
-      bullets: courseDays.bullets,
-    })
-    .from(courseDays)
-    .where(eq(courseDays.courseId, id))
-    .orderBy(asc(courseDays.dayNumber))
-    .all()
-
   const bestaetigt = confirmedCounts([id])[id] ?? 0
 
   return {
     ...course,
     confirmedCount: bestaetigt,
-    fullyBooked: isFullyBooked(course.capacity, bestaetigt),
-    freeSeats: freeSeats(course.capacity, bestaetigt),
-    days,
+    signupOpen: isSignupOpen(course.status, course.startsOn),
   }
 }
 

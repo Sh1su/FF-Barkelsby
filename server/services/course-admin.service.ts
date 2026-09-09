@@ -5,7 +5,7 @@ import type {
   UpdateCourseInput,
 } from '../../shared/validation/course'
 import type { CourseStatus } from '../../shared/constants'
-import { courseDays, courses, signups } from '../database/schema'
+import { courses, signups } from '../database/schema'
 import { formatRange, notifyCourseRecipients } from './mail.service'
 
 /**
@@ -26,14 +26,6 @@ export const COURSE_TRANSITIONS: Record<CourseStatus, CourseStatus[]> = {
 
 export function canTransition(from: CourseStatus, to: CourseStatus): boolean {
   return COURSE_TRANSITIONS[from].includes(to)
-}
-
-export function countConfirmedSignups(courseId: string): number {
-  return useDatabase()
-    .select({ value: count() })
-    .from(signups)
-    .where(and(eq(signups.courseId, courseId), eq(signups.status, 'bestaetigt')))
-    .get()?.value ?? 0
 }
 
 export function countSignups(courseId: string): number {
@@ -67,7 +59,6 @@ export function listCoursesInRange(from?: string, to?: string) {
       title: courses.title,
       startsOn: courses.startsOn,
       endsOn: courses.endsOn,
-      capacity: courses.capacity,
       status: courses.status,
       updatedAt: courses.updatedAt,
     })
@@ -87,7 +78,6 @@ export function createCourse(input: CreateCourseInput) {
       title: input.title,
       startsOn: parseDate(input.startsOn),
       endsOn: parseDate(input.endsOn),
-      capacity: input.capacity,
       motif: input.motif ?? null,
       palette: input.palette ?? null,
     })
@@ -121,53 +111,20 @@ export async function updateCourse(id: string, input: UpdateCourseInput) {
     })
   }
 
-  // Kapazitaet nie unter die bereits bestaetigten Anmeldungen (FV-3, AC-14).
-  if (typeof input.capacity === 'number') {
-    const confirmed = countConfirmedSignups(id)
-    if (input.capacity < confirmed) {
-      throw createError({
-        statusCode: 422,
-        statusMessage: `Es sind bereits ${confirmed} Anmeldungen bestätigt – die Platzzahl kann nicht darunter liegen.`,
-      })
-    }
-  }
-
-  db.transaction((tx) => {
-    tx.update(courses)
-      .set({
-        title: input.title ?? existing.title,
-        summary: input.summary ?? existing.summary,
-        description: input.description ?? existing.description,
-        topics: input.topics ?? existing.topics,
-        startsOn,
-        endsOn,
-        capacity: input.capacity ?? existing.capacity,
-        motif: input.motif === undefined ? existing.motif : input.motif,
-        palette: input.palette === undefined ? existing.palette : input.palette,
-        updatedAt: new Date(),
-      })
-      .where(eq(courses.id, id))
-      .run()
-
-    if (input.days) {
-      // Programmtage werden als Ganzes ersetzt – so bleibt die Reihenfolge eindeutig.
-      tx.delete(courseDays).where(eq(courseDays.courseId, id)).run()
-
-      for (const day of input.days) {
-        tx.insert(courseDays)
-          .values({
-            id: randomUUID(),
-            courseId: id,
-            dayNumber: day.dayNumber,
-            date: day.date ? parseDate(day.date) : null,
-            timeLabel: day.timeLabel,
-            title: day.title,
-            bullets: day.bullets ?? null,
-          })
-          .run()
-      }
-    }
-  })
+  db
+    .update(courses)
+    .set({
+      title: input.title ?? existing.title,
+      summary: input.summary ?? existing.summary,
+      description: input.description ?? existing.description,
+      startsOn,
+      endsOn,
+      motif: input.motif === undefined ? existing.motif : input.motif,
+      palette: input.palette === undefined ? existing.palette : input.palette,
+      updatedAt: new Date(),
+    })
+    .where(eq(courses.id, id))
+    .run()
 
   const updated = requireCourse(id)
 

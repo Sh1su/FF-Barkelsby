@@ -15,18 +15,14 @@ const state = reactive({
   title: '',
   summary: '',
   description: '',
-  topics: [] as string[],
   startsOn: '',
   endsOn: '',
-  capacity: 0,
   motif: undefined as number | undefined,
   palette: undefined as number | undefined,
-  days: [] as { dayNumber: number, date: string, timeLabel: string, title: string, bullets: string[] }[],
 })
 
 const busy = ref(false)
 const errorMessage = ref('')
-const newTopic = ref('')
 
 const MAIL_ICONS: Record<string, string> = {
   versendet: 'i-lucide-mail-check',
@@ -51,47 +47,11 @@ watchEffect(() => {
   state.title = course.value.title
   state.summary = course.value.summary ?? ''
   state.description = course.value.description ?? ''
-  state.topics = [...(course.value.topics ?? [])]
   state.startsOn = isoOf(course.value.startsOn)
   state.endsOn = isoOf(course.value.endsOn)
-  state.capacity = course.value.capacity
   state.motif = course.value.motif ?? undefined
   state.palette = course.value.palette ?? undefined
-  state.days = course.value.days.map(day => ({
-    dayNumber: day.dayNumber,
-    date: day.date ? isoOf(day.date) : '',
-    timeLabel: day.timeLabel ?? '',
-    title: day.title,
-    bullets: [...(day.bullets ?? [])],
-  }))
 })
-
-function addTopic() {
-  const value = newTopic.value.trim()
-  if (!value) return
-  state.topics.push(value)
-  newTopic.value = ''
-}
-
-function addDay() {
-  state.days.push({
-    dayNumber: state.days.length + 1,
-    date: state.startsOn,
-    timeLabel: '',
-    title: '',
-    bullets: [],
-  })
-}
-
-function moveDay(index: number, delta: number) {
-  const target = index + delta
-  if (target < 0 || target >= state.days.length) return
-  const [day] = state.days.splice(index, 1)
-  state.days.splice(target, 0, day!)
-  state.days.forEach((entry, position) => {
-    entry.dayNumber = position + 1
-  })
-}
 
 async function save() {
   busy.value = true
@@ -103,21 +63,10 @@ async function save() {
         title: state.title,
         summary: state.summary || undefined,
         description: state.description || undefined,
-        topics: state.topics,
         startsOn: state.startsOn,
         endsOn: state.endsOn,
-        capacity: state.capacity,
         motif: state.motif ?? null,
         palette: state.palette ?? null,
-        days: state.days
-          .filter(day => day.title.trim())
-          .map((day, index) => ({
-            dayNumber: index + 1,
-            date: day.date || undefined,
-            timeLabel: day.timeLabel || undefined,
-            title: day.title,
-            bullets: day.bullets.filter(Boolean),
-          })),
       },
     })
     toast.add({ title: 'Gespeichert', color: 'success' })
@@ -215,111 +164,12 @@ async function removeCourse() {
         <UFormField label="Beschreibung">
           <UTextarea v-model="state.description" :rows="5" class="w-full" data-testid="edit-description" />
         </UFormField>
-
-        <UFormField label="Themen">
-          <div class="space-y-2">
-            <div
-              v-for="(topic, index) in state.topics"
-              :key="`${topic}-${index}`"
-              class="flex items-center gap-2"
-            >
-              <UInput v-model="state.topics[index]" class="flex-1" />
-              <UButton
-                icon="i-lucide-trash-2"
-                variant="ghost"
-                color="neutral"
-                aria-label="Thema entfernen"
-                @click="state.topics.splice(index, 1)"
-              />
-            </div>
-            <div class="flex gap-2">
-              <UInput
-                v-model="newTopic"
-                placeholder="Thema hinzufügen"
-                class="flex-1"
-                data-testid="edit-new-topic"
-                @keydown.enter.prevent="addTopic"
-              />
-              <UButton variant="outline" color="neutral" @click="addTopic">
-                Hinzufügen
-              </UButton>
-            </div>
-          </div>
-        </UFormField>
-
-        <section>
-          <div class="flex items-center gap-2">
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">
-              Programm
-            </h2>
-            <UButton
-              size="xs"
-              variant="outline"
-              color="neutral"
-              class="ml-auto"
-              data-testid="edit-add-day"
-              @click="addDay"
-            >
-              Tag hinzufügen
-            </UButton>
-          </div>
-
-          <div class="mt-3 space-y-3">
-            <div
-              v-for="(day, index) in state.days"
-              :key="index"
-              class="rounded-lg border border-default p-3"
-              data-testid="edit-day"
-            >
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-fire-600">Tag {{ index + 1 }}</span>
-                <UButton
-                  icon="i-lucide-chevron-up"
-                  size="xs"
-                  variant="ghost"
-                  color="neutral"
-                  aria-label="Nach oben"
-                  class="ml-auto"
-                  @click="moveDay(index, -1)"
-                />
-                <UButton
-                  icon="i-lucide-chevron-down"
-                  size="xs"
-                  variant="ghost"
-                  color="neutral"
-                  aria-label="Nach unten"
-                  @click="moveDay(index, 1)"
-                />
-                <UButton
-                  icon="i-lucide-trash-2"
-                  size="xs"
-                  variant="ghost"
-                  color="neutral"
-                  aria-label="Tag entfernen"
-                  @click="state.days.splice(index, 1)"
-                />
-              </div>
-
-              <div class="mt-2 grid gap-2 sm:grid-cols-3">
-                <UInput v-model="day.date" type="date" />
-                <UInput v-model="day.timeLabel" placeholder="09:00 – 12:00" />
-                <UInput v-model="day.title" placeholder="Titel des Tages" class="sm:col-span-1" />
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       <aside class="space-y-4">
         <div class="space-y-4 rounded-lg border border-default bg-default p-5">
-          <UFormField label="Beginn">
-            <UInput v-model="state.startsOn" type="date" class="w-full" />
-          </UFormField>
-          <UFormField label="Ende">
-            <UInput v-model="state.endsOn" type="date" class="w-full" />
-          </UFormField>
-          <UFormField label="Plätze">
-            <UInput v-model.number="state.capacity" type="number" min="1" class="w-full" data-testid="edit-capacity" />
+          <UFormField label="Zeitraum">
+            <AdminCourseDateRangeField v-model:starts-on="state.startsOn" v-model:ends-on="state.endsOn" />
           </UFormField>
         </div>
 

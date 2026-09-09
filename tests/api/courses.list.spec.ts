@@ -86,14 +86,12 @@ describe('FV-2 Lehrgangskatalog – Übersicht', () => {
     expect(tooLarge.status).toBe(400)
   })
 
-  it('AC-6: meldet Belegung und Ausgebucht-Status je Lehrgang', async () => {
+  it('AC-6: meldet die Belegung je Lehrgang', async () => {
     const data = await (await list('?q=Truppmann')).json()
 
     expect(data.items[0]).toMatchObject({
-      capacity: 12,
       confirmedCount: 0,
-      fullyBooked: false,
-      freeSeats: 12,
+      signupOpen: true,
     })
   })
 
@@ -105,5 +103,13 @@ describe('FV-2 Lehrgangskatalog – Übersicht', () => {
     expect(data.items[0]).not.toHaveProperty('timeLabel')
     expect(data.items[0]).not.toHaveProperty('location')
     expect(data.items[0]).not.toHaveProperty('instructorName')
+  })
+
+  it('FV-14, AC-1: Karten enthalten keine Platzzahl mehr', async () => {
+    const data = await (await list('?q=Truppmann')).json()
+
+    expect(data.items[0]).not.toHaveProperty('capacity')
+    expect(data.items[0]).not.toHaveProperty('fullyBooked')
+    expect(data.items[0]).not.toHaveProperty('freeSeats')
   })
 })

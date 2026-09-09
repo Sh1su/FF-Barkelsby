@@ -1,5 +1,7 @@
+import { eq } from 'drizzle-orm'
 import { createTransport, type Transporter } from 'nodemailer'
 import { SMTP_TIMEOUT_MS } from '../../shared/constants'
+import { mailSettings } from '../database/schema'
 
 /**
  * Kapselt den SMTP-Versand (FV-4).
@@ -49,7 +51,28 @@ export function mailConfigFromEnv(env: NodeJS.ProcessEnv = process.env): MailCon
   })
 }
 
+/** Zeile aus der Einstellungen-Seite (`mail_settings`), falls dort ein Relay hinterlegt ist. */
+function mailConfigFromDb(): MailConfig | null {
+  const row = useDatabase().select().from(mailSettings).where(eq(mailSettings.id, 'default')).get()
+  if (!row) return null
+
+  return toMailConfig({
+    host: row.host,
+    port: row.port,
+    user: row.user,
+    password: row.passwordEncrypted ? decryptSecret(row.passwordEncrypted) : '',
+    from: row.fromAddress,
+  })
+}
+
+/**
+ * Konfiguration fuer den tatsaechlichen Versand: die Einstellungen-Seite hat Vorrang vor den
+ * NUXT_SMTP_*-Env-Variablen (die bleiben als Fallback, u. a. fuer Tests und Erstinbetriebnahme).
+ */
 export function readMailConfig(): MailConfig | null {
+  const fromDb = mailConfigFromDb()
+  if (fromDb) return fromDb
+
   const config = useRuntimeConfig()
 
   return toMailConfig({

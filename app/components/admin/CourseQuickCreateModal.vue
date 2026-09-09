@@ -11,7 +11,6 @@ const state = reactive({
   title: '',
   startsOn: props.date ?? '',
   endsOn: props.date ?? '',
-  capacity: undefined as number | undefined,
   motif: undefined as number | undefined,
   palette: undefined as number | undefined,
 })
@@ -75,17 +74,8 @@ async function onSubmit() {
           />
         </UFormField>
 
-        <div class="grid gap-4 sm:grid-cols-2">
-          <UFormField label="Beginn" name="startsOn" required>
-            <UInput v-model="state.startsOn" type="date" class="w-full" data-testid="course-start-input" />
-          </UFormField>
-          <UFormField label="Ende" name="endsOn" required :description="durationHint">
-            <UInput v-model="state.endsOn" type="date" class="w-full" data-testid="course-end-input" />
-          </UFormField>
-        </div>
-
-        <UFormField label="Plätze" name="capacity" required>
-          <UInput v-model.number="state.capacity" type="number" min="1" class="w-full" data-testid="course-capacity-input" />
+        <UFormField label="Zeitraum" name="endsOn" required :description="durationHint">
+          <AdminCourseDateRangeField v-model:starts-on="state.startsOn" v-model:ends-on="state.endsOn" />
         </UFormField>
 
         <UFormField label="Titelbild" name="motif">

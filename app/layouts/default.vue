@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { organisation } = useRuntimeConfig().public
+const { data: branding } = await useBranding()
 const { user } = useUserSession()
 const { logout } = useAuth()
 </script>
@@ -12,7 +12,7 @@ const { logout } = useAuth()
           <span
             class="flex size-9.5 items-center justify-center rounded-[10px] bg-fire-600 text-sm font-semibold text-white"
             aria-hidden="true"
-          >{{ organisation.shortName }}</span>
+          >{{ branding?.shortName }}</span>
           <span class="text-base font-semibold text-highlighted">Aktuelle Lehrgänge</span>
         </NuxtLink>
 
@@ -46,7 +46,7 @@ const { logout } = useAuth()
     </main>
 
     <footer class="mx-auto max-w-[1180px] px-6 pb-10 text-xs text-muted">
-      {{ organisation.name }}
+      {{ branding?.name }}
     </footer>
   </div>
 </template>

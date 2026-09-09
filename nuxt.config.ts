@@ -112,8 +112,8 @@ export default defineNuxtConfig({
       baseUrl: 'http://localhost:3000',
       // Name der Wehr – per NUXT_PUBLIC_ORGANISATION_NAME austauschbar, ohne Codeaenderung.
       organisation: {
-        name: 'Freiwillige Feuerwehr Musterstadt',
-        shortName: 'FW',
+        name: 'Freiwillige Feuerwehr Barkelsby',
+        shortName: 'FB',
       },
     },
   },

@@ -24,6 +24,8 @@ export const PUBLIC_API_ROUTES = [
   // Abmelde-Link aus der E-Mail: der Empfaenger hat keine Sitzung, der Zufallstoken
   // ist der Berechtigungsnachweis (FV-5, AC-8).
   '/api/abmeldung',
+  // Name, Kurzname und Logo der Wehr: die Login-Seite braucht sie schon vor der Anmeldung.
+  '/api/branding',
   // Interne Route von @nuxt/icon (liefert nur statische SVG-Icondaten, keine
   // personenbezogenen Daten). Ohne diese Ausnahme scheitert das serverseitige Icon-Rendering
   // fuer jedes Icon ausserhalb des kleinen client-seitigen Bundles mit 401 -> "[Icon] failed

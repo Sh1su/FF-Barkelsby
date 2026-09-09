@@ -41,19 +41,17 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
         title: 'Maschinistenlehrgang',
         startsOn: isoInDays(30),
         endsOn: isoInDays(31),
-        capacity: 8,
       }),
     })
 
     expect(response.status).toBe(201)
     expect(await response.json()).toMatchObject({
       title: 'Maschinistenlehrgang',
-      capacity: 8,
       status: 'geplant',
     })
   })
 
-  it('FV-13, AC-5: weist eine Platzzahl von 0 mit 400 ab', async () => {
+  it('FV-14, AC-1: eine mitgeschickte Platzzahl wird ignoriert – es gibt das Feld nicht mehr', async () => {
     const response = await admin('/api/admin/courses', {
       method: 'POST',
       body: JSON.stringify({
@@ -64,7 +62,8 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
       }),
     })
 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(201)
+    expect(await response.json()).not.toHaveProperty('capacity')
   })
 
   it('AC-6: weist ein Ende vor dem Beginn mit 400 ab', async () => {
@@ -74,7 +73,6 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
         title: 'Rückwärtslehrgang',
         startsOn: isoInDays(10),
         endsOn: isoInDays(5),
-        capacity: 10,
       }),
     })
 
@@ -88,7 +86,6 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
         title: 'Untergeschobener Status',
         startsOn: isoInDays(40),
         endsOn: isoInDays(40),
-        capacity: 10,
         status: 'abgesagt',
         confirmedCount: 99,
       }),
@@ -118,14 +115,13 @@ describe('FV-3 Admin-Kalender – Anlegen', () => {
 })
 
 describe('FV-3 Admin-Kalender – Bearbeiten', () => {
-  it('AC-8: speichert Beschreibung und Themen', async () => {
+  it('AC-8: speichert Beschreibung', async () => {
     const course = await createCourse(adminCookie)
 
     const response = await admin(`/api/admin/courses/${course.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
         description: 'Ausführliche Beschreibung.',
-        topics: ['Thema A', 'Thema B'],
       }),
     })
 
@@ -133,41 +129,23 @@ describe('FV-3 Admin-Kalender – Bearbeiten', () => {
 
     const detail = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
     expect(detail.description).toBe('Ausführliche Beschreibung.')
-    expect(detail.topics).toEqual(['Thema A', 'Thema B'])
   })
 
-  it('AC-9: speichert Programmtage in der übergebenen Reihenfolge', async () => {
+  it('AC-9: mitgeschickte Themen und Programmtage werden ignoriert – es gibt die Felder nicht mehr', async () => {
     const course = await createCourse(adminCookie)
 
-    await admin(`/api/admin/courses/${course.id}`, {
+    const response = await admin(`/api/admin/courses/${course.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
-        days: [
-          { dayNumber: 1, title: 'Erster Tag' },
-          { dayNumber: 2, title: 'Zweiter Tag' },
-          { dayNumber: 3, title: 'Dritter Tag' },
-        ],
+        topics: ['Thema A'],
+        days: [{ dayNumber: 1, title: 'Erster Tag' }],
       }),
     })
 
-    // Umsortieren: der dritte Tag wird zum ersten.
-    await admin(`/api/admin/courses/${course.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        days: [
-          { dayNumber: 1, title: 'Dritter Tag' },
-          { dayNumber: 2, title: 'Erster Tag' },
-          { dayNumber: 3, title: 'Zweiter Tag' },
-        ],
-      }),
-    })
-
-    const detail = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
-    expect(detail.days.map((day: { title: string }) => day.title)).toEqual([
-      'Dritter Tag',
-      'Erster Tag',
-      'Zweiter Tag',
-    ])
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body).not.toHaveProperty('topics')
+    expect(body).not.toHaveProperty('days')
   })
 
   it('AC-6: weist beim Bearbeiten ein Ende vor dem Beginn ab', async () => {
@@ -263,27 +241,7 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
     expect((await admin(`/api/admin/courses/${course.id}`, { method: 'DELETE' })).status).toBe(409)
   })
 
-  it('AC-14: die Platzzahl kann nicht unter die bestätigten Anmeldungen gesenkt werden', async () => {
-    const course = await createCourse(adminCookie, { capacity: 10 })
-    insertSignup('admin-courses', course.id, 'bestaetigt')
-    insertSignup('admin-courses', course.id, 'bestaetigt')
-    insertSignup('admin-courses', course.id, 'offen')
-
-    const tooSmall = await admin(`/api/admin/courses/${course.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ capacity: 1 }),
-    })
-    expect(tooSmall.status).toBe(422)
-
-    // Zwei bestaetigte Anmeldungen: genau zwei Plaetze sind erlaubt.
-    const exact = await admin(`/api/admin/courses/${course.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ capacity: 2 }),
-    })
-    expect(exact.status).toBe(200)
-  })
-
-  it('FV-13, AC-5: weist beim Bearbeiten eine Platzzahl von 0 mit 400 ab', async () => {
+  it('FV-14, AC-1: eine mitgeschickte Platzzahl beim Bearbeiten wird ignoriert', async () => {
     const course = await createCourse(adminCookie)
 
     const response = await admin(`/api/admin/courses/${course.id}`, {
@@ -291,11 +249,12 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
       body: JSON.stringify({ capacity: 0 }),
     })
 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(200)
+    expect(await response.json()).not.toHaveProperty('capacity')
   })
 
   it('AC-6: Belegung zählt nur bestätigte Anmeldungen', async () => {
-    const course = await createCourse(adminCookie, { capacity: 2, title: 'Belegungstest' })
+    const course = await createCourse(adminCookie, { title: 'Belegungstest' })
     insertSignup('admin-courses', course.id, 'bestaetigt')
     insertSignup('admin-courses', course.id, 'offen')
 

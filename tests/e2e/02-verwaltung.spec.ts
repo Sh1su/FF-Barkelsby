@@ -15,6 +15,12 @@ function isoInDays(days: number) {
   return date.toISOString().slice(0, 10)
 }
 
+/** Format, das der Nuxt-UI-Datumsbereich-Picker anzeigt (de-DE, "medium"). */
+function formatiertesDatum(iso: string) {
+  const [jahr, monat, tag] = iso.split('-')
+  return `${tag}.${monat}.${jahr}`
+}
+
 const TITEL = 'E2E Atemschutz Fortbildung'
 
 test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
@@ -45,18 +51,19 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
     await dayCell.click()
 
     await expect(page.getByTestId('course-create-form')).toBeVisible()
-    await expect(page.getByTestId('course-start-input')).toHaveValue(tag)
+    await expect(page.getByTestId('course-date-range-trigger')).toContainText(formatiertesDatum(tag))
 
     // FV-13, AC-1: Kategorie, Format, Uhrzeit, Ausbilder und Ort fragt das Formular nicht mehr ab.
+    // FV-14, AC-1: Plätze ebenfalls nicht mehr.
     const form = page.getByTestId('course-create-form')
     await expect(form.getByText('Kategorie')).toHaveCount(0)
     await expect(form.getByText('Format')).toHaveCount(0)
     await expect(form.getByText('Uhrzeit')).toHaveCount(0)
     await expect(form.getByText('Ausbilder')).toHaveCount(0)
     await expect(form.getByText('Ort', { exact: true })).toHaveCount(0)
+    await expect(form.getByText('Plätze')).toHaveCount(0)
 
     await fillStable(page.getByTestId('course-title-input'), TITEL)
-    await fillStable(page.getByTestId('course-capacity-input'), '8')
     await page.getByTestId('course-create-submit').click()
 
     await expect(page.getByTestId('course-create-form')).toBeHidden()
@@ -71,7 +78,9 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
 
     await page.getByTestId('course-card').filter({ hasText: TITEL }).getByTestId('course-details-link').click()
     await expect(page.getByTestId('course-title')).toContainText(TITEL)
-    await expect(page.getByTestId('course-facts')).toContainText('0 von 8 Plätzen belegt')
+    // FV-14, AC-1: keine Platzzahl mehr - die Faktenbox zeigt nur noch Zeitraum und Dauer.
+    await expect(page.getByTestId('course-facts')).not.toContainText('Plätzen')
+    await expect(page.getByTestId('course-facts')).toContainText('Ein Tag')
   })
 
   test('FV-2 AC-4: eine erfolglose Suche zeigt den Leerzustand mit Rücksetzer', async ({ page }) => {
@@ -96,6 +105,7 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
     await expect(page.getByText('Uhrzeit')).toHaveCount(0)
     await expect(page.getByText('Ausbilder')).toHaveCount(0)
     await expect(page.getByText('Ort', { exact: true })).toHaveCount(0)
+    await expect(page.getByText('Plätze')).toHaveCount(0)
   })
 
   test('AC-10: ein abgesagter Lehrgang bleibt sichtbar und ist markiert', async ({ page }) => {
@@ -127,7 +137,6 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
         title: 'E2E Registraturlehrgang',
         startsOn: isoInDays(45),
         endsOn: isoInDays(45),
-        capacity: 5,
       },
     })).json()
 

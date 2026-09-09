@@ -181,8 +181,8 @@ describe('FV-6 Registratur – Entscheidungen', () => {
     expect(response.status).toBe(403)
   })
 
-  it('AC-6: Bestätigungen über die Platzzahl hinaus sind möglich und werden gekennzeichnet', async () => {
-    const course = await createCourse(adminCookie, { capacity: 1 })
+  it('FV-14, AC-1: Bestätigungen ohne Platzzahl sind uneingeschränkt möglich', async () => {
+    const course = await createCourse(adminCookie)
     const ersterId = insertSignup(DB, course.id, 'offen', 'platz1@test.local')
     const zweiterId = insertSignup(DB, course.id, 'offen', 'platz2@test.local')
 
@@ -190,9 +190,7 @@ describe('FV-6 Registratur – Entscheidungen', () => {
     expect((await setzeStatus(zweiterId, 'bestaetigt')).status).toBe(200)
 
     const daten = await registratur(`?lehrgang=${course.id}&status=bestaetigt`)
-    const markiert = daten.items.filter((eintrag: { ueberKapazitaet: boolean }) => eintrag.ueberKapazitaet)
-
     expect(daten.items).toHaveLength(2)
-    expect(markiert).toHaveLength(1)
+    expect(daten.items[0]).not.toHaveProperty('ueberKapazitaet')
   })
 })

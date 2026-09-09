@@ -7,7 +7,7 @@ definePageMeta({ layout: 'blank' })
 
 const route = useRoute()
 const token = computed(() => String(route.params.token))
-const { organisation } = useRuntimeConfig().public
+const { data: branding } = await useBranding()
 
 useHead({ title: 'Abmeldung' })
 
@@ -90,7 +90,7 @@ async function abmelden() {
       </div>
 
       <p class="mt-6 text-xs text-muted">
-        {{ organisation.name }}
+        {{ branding?.name }}
       </p>
     </div>
   </div>

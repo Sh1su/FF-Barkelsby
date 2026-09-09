@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { organisation } = useRuntimeConfig().public
+const { data: branding } = await useBranding()
 const route = useRoute()
 const router = useRouter()
 
@@ -38,7 +38,7 @@ function resetFilters() {
         Aktuelle Lehrgänge
       </h1>
       <p class="mt-1 text-sm text-toned">
-        {{ organisation.name }} · Anmeldung ohne persönliches Konto
+        {{ branding?.name }} · Anmeldung ohne persönliches Konto
       </p>
     </header>
 

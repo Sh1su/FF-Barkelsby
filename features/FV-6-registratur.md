@@ -5,6 +5,10 @@
 **Last Updated:** 2026-08-10
 **Abhängigkeiten:** FV-5 (Anmeldungen), FV-4 (Mailversand)
 
+> **Hinweis (2026-09-01):** [FV-14](FV-14-plaetze-entfernen.md) hat die Platzzahl entfernt – AC-6
+> („über Kapazität"-Kennzeichnung) ist damit historisch und spiegelt nicht mehr den aktuellen
+> Stand.
+
 ## Ziel
 
 Der zweite Tab der Verwaltung aus dem Entwurf: eine Tabelle aller Interessensbekundungen mit
@@ -29,8 +33,8 @@ Anwesenheitsliste am Lehrgangstag. Jede Entscheidung löst die passende E-Mail a
 - [x] **AC-4:** Ein unzulässiger Übergang (etwa `storniert → bestätigt`) wird mit 422 abgelehnt.
 - [x] **AC-5:** Eine Bestätigung verschickt die Zusage, eine Ablehnung die Absage; „Rückgängig"
       verschickt nichts. Jeder Versuch steht im Mailprotokoll.
-- [x] **AC-6:** Bestätigungen über die Platzzahl hinaus sind möglich, werden aber als
-      „über Kapazität" gekennzeichnet.
+- [x] AC-6 (entfällt seit FV-14, es gibt keine Platzzahl mehr): Bestätigungen über die Platzzahl
+      hinaus sind möglich, werden aber als „über Kapazität" gekennzeichnet.
 - [x] **AC-7:** Der CSV-Export eines Lehrgangs enthält alle nicht stornierten Anmeldungen mit
       Name, E-Mail, Status und Anmeldedatum; Trennzeichen Semikolon, UTF-8 mit BOM, damit Excel
       Umlaute korrekt anzeigt.

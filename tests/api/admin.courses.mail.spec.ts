@@ -165,7 +165,6 @@ describe('FV-4 E-Mail-Infrastruktur – Terminänderung', () => {
       method: 'PATCH',
       body: JSON.stringify({
         description: 'Neuer Beschreibungstext',
-        capacity: 30,
         summary: 'Neue Kurzbeschreibung',
       }),
     })
