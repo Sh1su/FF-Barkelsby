@@ -35,7 +35,7 @@
     "nodemailer": "^9.1.1",
     "nuxt": "^4.4.5",
     "nuxt-auth-utils": "^0.5.30",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
