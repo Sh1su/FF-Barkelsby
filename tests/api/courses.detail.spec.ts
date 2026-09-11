@@ -6,14 +6,14 @@ import { createCourse, isoInDays } from '../factories/course'
 
 await startTestServer('courses-detail')
 
-let guestCookie: string
+let memberCookie: string
 let adminCookie: string
 let courseId: string
 let bareCourseId: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.2.1')
-  guestCookie = await signIn('guest', '127.0.2.2')
+  memberCookie = await signIn('member', '127.0.2.2')
 
   const course = await createCourse(adminCookie)
   courseId = course.id
@@ -39,13 +39,13 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
   })
 
   it('AC-8: liefert die Beschreibung', async () => {
-    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
+    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: memberCookie } })).json()
 
     expect(data.description).toBe('Grundlagen für neue Einsatzkräfte.')
   })
 
   it('FV-13, AC-3: liefert keine Kategorie/Format/Ausbilder/Uhrzeit/Ort/Themen/Programm mehr', async () => {
-    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
+    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: memberCookie } })).json()
 
     expect(data).not.toHaveProperty('category')
     expect(data).not.toHaveProperty('format')
@@ -57,14 +57,14 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
   })
 
   it('AC-8: ein schnell angelegter Lehrgang liefert eine leere Beschreibung statt Platzhaltertext', async () => {
-    const data = await (await fetch(`/api/courses/${bareCourseId}`, { headers: { cookie: guestCookie } })).json()
+    const data = await (await fetch(`/api/courses/${bareCourseId}`, { headers: { cookie: memberCookie } })).json()
 
     expect(data.description).toBeNull()
   })
 
   it('AC-8: liefert für einen unbekannten Lehrgang 404', async () => {
     const response = await fetch('/api/courses/gibt-es-nicht', {
-      headers: { cookie: guestCookie },
+      headers: { cookie: memberCookie },
       redirect: 'manual',
     })
 
@@ -72,7 +72,7 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
   })
 
   it('FV-14, AC-1: liefert keine Platzzahl mehr und meldet die Anmeldung als offen', async () => {
-    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
+    const data = await (await fetch(`/api/courses/${courseId}`, { headers: { cookie: memberCookie } })).json()
 
     expect(data).not.toHaveProperty('capacity')
     expect(data).not.toHaveProperty('fullyBooked')
@@ -87,7 +87,7 @@ describe('FV-2 Lehrgangskatalog – Detailseite', () => {
       endsOn: isoInDays(1),
     })
 
-    const data = await (await fetch(`/api/courses/${gestern.id}`, { headers: { cookie: guestCookie } })).json()
+    const data = await (await fetch(`/api/courses/${gestern.id}`, { headers: { cookie: memberCookie } })).json()
     expect(data.signupOpen).toBe(false)
   })
 })

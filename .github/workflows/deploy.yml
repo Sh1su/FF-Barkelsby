@@ -187,7 +187,7 @@ jobs:
       # niemals echte Produktions-Secrets verwenden. Alle sind Pflicht, sonst bricht
       # server/plugins/bootstrap.ts vor den Migrationen ab:
       # - NUXT_SESSION_PASSWORD: ohne (min. 32 Zeichen) verweigert bootstrap.ts den Start.
-      # - NUXT_ADMIN_*/NUXT_GUEST_*: ohne wirft readSeedEnv() eine unhandledRejection,
+      # - NUXT_ADMIN_*/NUXT_MEMBER_*: ohne wirft readSeedEnv() eine unhandledRejection,
       #   BEVOR die Migrationen laufen – /api/health prüft aber nur "select 1", das auch
       #   auf einer komplett unmigrierten Datenbank erfolgreich ist. Ohne diese vier Werte
       #   wäre der Health-Check also falsch-positiv grün, obwohl bootstrap.ts nie
@@ -200,8 +200,8 @@ jobs:
             -e NUXT_SESSION_PASSWORD=ci-only-dummy-secret-mindestens-32-zeichen-lang \
             -e NUXT_ADMIN_EMAIL=ci-admin@example.local \
             -e NUXT_ADMIN_PASSWORD=ci-only-dummy-admin-passwort \
-            -e NUXT_GUEST_EMAIL=ci-gast@example.local \
-            -e NUXT_GUEST_PASSWORD=ci-only-dummy-gast-passwort \
+            -e NUXT_MEMBER_EMAIL=ci-mitglied@example.local \
+            -e NUXT_MEMBER_PASSWORD=ci-only-dummy-mitglied-passwort \
             "$IMAGE_TAG"
 
           echo "Warte auf Container-Start und prüfe /api/health..."

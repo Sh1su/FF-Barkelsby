@@ -77,13 +77,13 @@ describe('FV-5 Selbstabmeldung über den Token-Link', () => {
     const token = randomUUID()
     insertSignup(DB, course.id, 'bestaetigt', 'zaehlt@test.local', token)
 
-    const guestCookie = await signIn('guest', '127.0.9.2')
-    const vorher = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
+    const memberCookie = await signIn('member', '127.0.9.2')
+    const vorher = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: memberCookie } })).json()
     expect(vorher.confirmedCount).toBe(1)
 
     await ohneAnmeldung(`/api/abmeldung/${token}`, { method: 'POST' })
 
-    const nachher = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
+    const nachher = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: memberCookie } })).json()
     expect(nachher.confirmedCount).toBe(0)
   })
 })

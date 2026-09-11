@@ -118,10 +118,10 @@ ask DOMAIN "Domain (z. B. fortbildung.wehr.example, muss per DNS auf diesen Serv
 
 : "${NUXT_SESSION_PASSWORD:=$(gen_secret 32)}"
 : "${NUXT_ADMIN_PASSWORD:=$(gen_secret 18)}"
-: "${NUXT_GUEST_PASSWORD:=$(gen_secret 18)}"
+: "${NUXT_MEMBER_PASSWORD:=$(gen_secret 18)}"
 
 ask NUXT_ADMIN_EMAIL "E-Mail des Erst-Admins" "wehrfuehrung@wehr.example"
-ask NUXT_GUEST_EMAIL "Kennung des Gast-Zugangs" "gast@wehr.example"
+ask NUXT_MEMBER_EMAIL "Kennung des Mitglied-Zugangs" "mitglied@wehr.example"
 ask ACME_EMAIL "Kontakt-E-Mail für Let's Encrypt (Ablauf-/Widerrufshinweise)" "$NUXT_ADMIN_EMAIL"
 ask NUXT_SMTP_HOST "SMTP-Host (leer = kein Mailversand)" ""
 ask NUXT_SMTP_USER "SMTP-Benutzer" ""
@@ -140,13 +140,13 @@ cat > "$ENV_FILE" <<EOF
 DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
 
-# Pflicht (server/plugins/bootstrap.ts, FV-1). Ohne die vier NUXT_ADMIN_*/NUXT_GUEST_*
+# Pflicht (server/plugins/bootstrap.ts, FV-1). Ohne die vier NUXT_ADMIN_*/NUXT_MEMBER_*
 # Werte bricht das Seeding vor den Migrationen ab, siehe docs/docker-deployment.md.
 NUXT_SESSION_PASSWORD=$NUXT_SESSION_PASSWORD
 NUXT_ADMIN_EMAIL=$NUXT_ADMIN_EMAIL
 NUXT_ADMIN_PASSWORD=$NUXT_ADMIN_PASSWORD
-NUXT_GUEST_EMAIL=$NUXT_GUEST_EMAIL
-NUXT_GUEST_PASSWORD=$NUXT_GUEST_PASSWORD
+NUXT_MEMBER_EMAIL=$NUXT_MEMBER_EMAIL
+NUXT_MEMBER_PASSWORD=$NUXT_MEMBER_PASSWORD
 
 # Aus der Domain abgeleitet (https, da Caddy automatisch auf TLS umleitet).
 NUXT_PUBLIC_APP_URL=$NUXT_PUBLIC_APP_URL
@@ -375,8 +375,8 @@ services:
       # docs/docker-deployment.md), aber es existiert keine migrierte Datenbank.
       NUXT_ADMIN_EMAIL: ${NUXT_ADMIN_EMAIL:?bitte in .env setzen}
       NUXT_ADMIN_PASSWORD: ${NUXT_ADMIN_PASSWORD:?bitte in .env setzen}
-      NUXT_GUEST_EMAIL: ${NUXT_GUEST_EMAIL:?bitte in .env setzen}
-      NUXT_GUEST_PASSWORD: ${NUXT_GUEST_PASSWORD:?bitte in .env setzen}
+      NUXT_MEMBER_EMAIL: ${NUXT_MEMBER_EMAIL:?bitte in .env setzen}
+      NUXT_MEMBER_PASSWORD: ${NUXT_MEMBER_PASSWORD:?bitte in .env setzen}
       NUXT_DB_PATH: /data/app.db
       NUXT_UPLOAD_DIR: /data/uploads
       NUXT_BACKUP_MARKER: /backups/last-success   # /api/health meldet degraded, wenn zu alt
@@ -478,8 +478,8 @@ echo "Verzeichnis: $TARGET_DIR"
 find "$TARGET_DIR" -maxdepth 3 \( -path "*/ops/*" -o -name "*.env" -o -name "Caddyfile" -o -name "docker-compose.yml" \) | sed "s|^$TARGET_DIR|  .|"
 echo ""
 echo "Erzeugte Startpasswoerter (Wechsel wird beim ersten Anmelden erzwungen):"
-echo "  Admin: $NUXT_ADMIN_EMAIL / $NUXT_ADMIN_PASSWORD"
-echo "  Gast:  $NUXT_GUEST_EMAIL / $NUXT_GUEST_PASSWORD"
+echo "  Admin:    $NUXT_ADMIN_EMAIL / $NUXT_ADMIN_PASSWORD"
+echo "  Mitglied: $NUXT_MEMBER_EMAIL / $NUXT_MEMBER_PASSWORD"
 echo ""
 echo "Domain: $DOMAIN   (Zertifikat wird beim ersten Start automatisch von Let's Encrypt geholt)"
 echo "Image:  $APP_IMAGE"

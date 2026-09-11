@@ -8,12 +8,12 @@ import { insertSignup } from '../factories/signup'
 await startTestServer('signups')
 
 const DB = 'signups'
-let guestCookie: string
+let memberCookie: string
 let adminCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.8.1')
-  guestCookie = await signIn('guest', '127.0.8.2')
+  memberCookie = await signIn('member', '127.0.8.2')
 })
 
 const ANMELDUNG = {
@@ -23,7 +23,7 @@ const ANMELDUNG = {
   consent: true,
 }
 
-function anmelden(courseId: string, body: Record<string, unknown> = ANMELDUNG, cookie: string | null = guestCookie, ip = '127.0.8.3') {
+function anmelden(courseId: string, body: Record<string, unknown> = ANMELDUNG, cookie: string | null = memberCookie, ip = '127.0.8.3') {
   return fetch(`/api/courses/${courseId}/signups`, {
     method: 'POST',
     headers: {
@@ -37,7 +37,7 @@ function anmelden(courseId: string, body: Record<string, unknown> = ANMELDUNG, c
 }
 
 async function detail(courseId: string) {
-  return (await fetch(`/api/courses/${courseId}`, { headers: { cookie: guestCookie } })).json()
+  return (await fetch(`/api/courses/${courseId}`, { headers: { cookie: memberCookie } })).json()
 }
 
 async function mails(courseId: string) {
@@ -203,7 +203,7 @@ describe('FV-5 Interessensbekundung', () => {
       const response = await anmelden(
         course.id,
         { ...ANMELDUNG, email: `person${versuch}@test.local` },
-        guestCookie,
+        memberCookie,
         ip,
       )
       letzterStatus = response.status

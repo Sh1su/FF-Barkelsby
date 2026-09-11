@@ -95,7 +95,7 @@ test('Bildstrecke für die QA', async ({ page }) => {
   }
 
   // Eine Anmeldung erzeugen, damit Formular und Registratur etwas zu zeigen haben.
-  await signIn(page, 'guest')
+  await signIn(page, 'member')
   await page.goto(`/lehrgang/${firstCourseId}`)
   await page.getByTestId('course-signup-button').click()
   await page.waitForTimeout(500)
@@ -133,7 +133,7 @@ test('Bildstrecke für die QA', async ({ page }) => {
   await page.waitForTimeout(600)
   await page.screenshot({ path: `${SHOTS}/11-dunkel-bearbeiten.png`, fullPage: true })
 
-  await signIn(page, 'guest')
+  await signIn(page, 'member')
   await page.waitForTimeout(600)
   await page.screenshot({ path: `${SHOTS}/09-dunkel-uebersicht.png`, fullPage: true })
 
@@ -160,8 +160,8 @@ test('Bildstrecke für die QA', async ({ page }) => {
   await page.waitForTimeout(800)
   await page.screenshot({ path: `${SHOTS}/07-verwaltung-schnellanlage.png` })
 
-  // Gast-Ansicht
-  await signIn(page, 'guest')
+  // Mitglied-Ansicht
+  await signIn(page, 'member')
   await page.waitForTimeout(600)
   await page.screenshot({ path: `${SHOTS}/02-uebersicht-desktop.png`, fullPage: true })
 

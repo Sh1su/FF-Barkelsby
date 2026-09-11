@@ -50,6 +50,13 @@
       "when": 1788886849622,
       "tag": "0006_fine_misty_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1789163949403,
+      "tag": "0007_strange_franklin_storm",
+      "breakpoints": true
     }
   ]
 }

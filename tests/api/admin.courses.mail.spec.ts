@@ -13,11 +13,11 @@ await startTestServer('admin-courses-mail')
 
 const DB = 'admin-courses-mail'
 let adminCookie: string
-let guestCookie: string
+let memberCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.6.1')
-  guestCookie = await signIn('guest', '127.0.6.2')
+  memberCookie = await signIn('member', '127.0.6.2')
 })
 
 function admin(path: string, init: RequestInit = {}, cookie: string | null = adminCookie) {
@@ -56,7 +56,7 @@ describe('FV-4 E-Mail-Infrastruktur – Absage', () => {
     const course = await createCourse(adminCookie)
 
     expect((await admin(`/api/admin/courses/${course.id}/mails`, {}, null)).status).toBe(401)
-    expect((await admin(`/api/admin/courses/${course.id}/mails`, {}, guestCookie)).status).toBe(403)
+    expect((await admin(`/api/admin/courses/${course.id}/mails`, {}, memberCookie)).status).toBe(403)
   })
 
   it('AC-1: ohne SMTP-Konfiguration wird protokolliert statt versendet', async () => {

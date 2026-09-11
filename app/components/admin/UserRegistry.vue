@@ -2,7 +2,7 @@
 import { createUserSchema } from '#shared/validation/user'
 import { PASSWORD_MIN_LENGTH } from '#shared/constants'
 
-/** Dritter Tab der Verwaltung: Gast-Zugang und Admin-Konten pflegen (FV-7). */
+/** Dritter Tab der Verwaltung: Mitglieds- und Admin-Konten pflegen (FV-7, FV-15). */
 const toast = useToast()
 const { user: angemeldet } = useUserSession()
 
@@ -29,7 +29,7 @@ const kennungDialogFuer = ref<string>('')
 const neueKennung = ref('')
 const kennungFehler = ref('')
 
-const gastKonto = computed(() => konten.value.find(konto => konto.role === 'guest'))
+const mitgliedskonten = computed(() => konten.value.filter(konto => konto.role === 'member'))
 const adminKonten = computed(() => konten.value.filter(konto => konto.role === 'admin'))
 const aktiveAdmins = computed(() => adminKonten.value.filter(konto => konto.active).length)
 
@@ -96,7 +96,7 @@ async function kennungSpeichern() {
   <section class="space-y-6" data-testid="user-registry">
     <div class="flex flex-wrap items-center gap-3">
       <p class="text-sm text-muted">
-        {{ aktiveAdmins }} aktive Verwaltungskonten · 1 geteilter Gast-Zugang
+        {{ aktiveAdmins }} aktive Verwaltungskonten · {{ mitgliedskonten.length }} Mitgliedskonten
       </p>
       <!-- min-h-11 = 44px: Mindestgroesse fuer Bedienelemente auf dem Handy (.claude/rules/testing.md) -->
       <UButton
@@ -127,7 +127,7 @@ async function kennungSpeichern() {
       color="warning"
       variant="subtle"
       title="Keine Konten vorhanden."
-      description="Das sollte nicht vorkommen – ohne Gast-Zugang sieht die Wehr keine Lehrgänge. Bitte den Serverstart prüfen."
+      description="Das sollte nicht vorkommen – ohne aktives Konto kann sich niemand anmelden. Bitte den Serverstart prüfen."
       data-testid="user-empty"
     />
 
@@ -157,7 +157,7 @@ async function kennungSpeichern() {
             </td>
             <td class="px-4 py-3">
               <UBadge :color="konto.role === 'admin' ? 'primary' : 'neutral'" variant="subtle" size="sm">
-                {{ konto.role === 'admin' ? 'Verwaltung' : 'Gast-Zugang' }}
+                {{ konto.role === 'admin' ? 'Verwaltung' : 'Mitglied' }}
               </UBadge>
             </td>
             <td class="px-4 py-3">
@@ -207,7 +207,6 @@ async function kennungSpeichern() {
                   Kennung
                 </UButton>
                 <UButton
-                  v-if="konto.role === 'admin'"
                   variant="outline"
                   class="min-h-11"
                   :color="konto.active ? 'error' : 'primary'"
@@ -225,11 +224,8 @@ async function kennungSpeichern() {
     </div>
 
     <p class="text-xs text-muted">
-      Der Gast-Zugang lässt sich nur ändern, nicht abschalten – ohne ihn sähe die Wehr keine
-      Lehrgänge mehr. Ebenso bleibt immer mindestens ein Verwaltungskonto aktiv.
-      <template v-if="gastKonto">
-        Aktuelle Gast-Kennung: <strong>{{ gastKonto.email }}</strong>.
-      </template>
+      Es bleibt immer mindestens ein aktives Verwaltungskonto – jedes andere Konto lässt sich
+      jederzeit deaktivieren.
     </p>
 
     <UModal v-model:open="anlegenOffen" title="Admin anlegen">

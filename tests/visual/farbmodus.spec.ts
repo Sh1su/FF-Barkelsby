@@ -54,7 +54,7 @@ async function farbwerte(page: Page, selektor: string) {
 test.describe.serial('FV-11 Farbmodus', () => {
   test('AC-1: ohne eigene Wahl folgt die Anwendung der Systemeinstellung', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' })
-    await signIn(page, 'guest')
+    await signIn(page, 'member')
     await expect(page.locator('html')).toHaveClass(/dark/)
 
     await page.emulateMedia({ colorScheme: 'light' })
@@ -64,7 +64,7 @@ test.describe.serial('FV-11 Farbmodus', () => {
 
   test('AC-2/AC-6: der Umschalter wechselt den Modus und merkt sich die Wahl', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' })
-    await signIn(page, 'guest')
+    await signIn(page, 'member')
 
     const umschalter = page.getByTestId('color-mode-toggle')
     await expect(umschalter).toBeVisible()
@@ -91,7 +91,7 @@ test.describe.serial('FV-11 Farbmodus', () => {
   for (const modus of ['light', 'dark'] as const) {
     test(`AC-3: Fließtext hat im Modus ${modus} ausreichenden Kontrast`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: modus })
-      await signIn(page, 'guest')
+      await signIn(page, 'member')
 
       // Bewusst Elemente, die es auch ohne Lehrgänge gibt – so haengt der Test nicht an Daten.
       const ueberschrift = await farbwerte(page, 'h1')
@@ -103,7 +103,7 @@ test.describe.serial('FV-11 Farbmodus', () => {
 
     test(`AC-4/AC-5: Eingabefelder sind im Modus ${modus} erkennbar`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: modus })
-      await signIn(page, 'guest')
+      await signIn(page, 'member')
 
       const feld = await farbwerte(page, '[data-testid="course-search"]')
       const seite = await farbwerte(page, 'body')

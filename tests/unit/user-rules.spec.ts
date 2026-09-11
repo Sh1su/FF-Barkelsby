@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { darfDeaktivieren } from '../../server/services/user-admin.service'
 
 describe('FV-7 Benutzerverwaltung – Schutzregeln', () => {
-  it('AC-7: der Gast-Zugang lässt sich nie abschalten', () => {
-    const regel = darfDeaktivieren({ role: 'guest' }, 5)
-
-    expect(regel.erlaubt).toBe(false)
-    expect(regel.grund).toContain('Gast-Zugang')
+  it('AC-7, FV-15 AC-4: ein Mitgliedskonto lässt sich abschalten – keine Sonderrolle mehr', () => {
+    // Bis FV-15 galt hier ein Sonderfall fuer das eine geteilte Gast-Konto. Seit
+    // persoenliche Mitgliedskonten das ersetzen, greift nur noch die
+    // Admin-Mindestzahl-Regel – ein Mitgliedskonto zaehlt dafuer ohnehin nicht mit.
+    expect(darfDeaktivieren({ role: 'member' }, 5).erlaubt).toBe(true)
+    expect(darfDeaktivieren({ role: 'member' }, 0).erlaubt).toBe(true)
   })
 
   it('AC-6: der letzte aktive Admin bleibt aktiv', () => {

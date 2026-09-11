@@ -27,13 +27,13 @@ describe('FV-1 Fundament & Login-Gate – Session', () => {
     expect(response.status).toBe(401)
   })
 
-  it('AC-8: die Gast-Session läuft nach 30 Tagen ab', async () => {
-    const cookie = await signIn('guest', '127.0.0.21')
+  it('AC-8: die Mitglied-Session läuft nach 30 Tagen ab', async () => {
+    const cookie = await signIn('member', '127.0.0.21')
     const session = await (await get('/api/_auth/session', cookie)).json()
 
     const lifetimeSeconds = (session.expiresAt - Date.now()) / 1000
-    expect(lifetimeSeconds).toBeGreaterThan(SESSION_MAX_AGE_SECONDS.guest - 120)
-    expect(lifetimeSeconds).toBeLessThanOrEqual(SESSION_MAX_AGE_SECONDS.guest)
+    expect(lifetimeSeconds).toBeGreaterThan(SESSION_MAX_AGE_SECONDS.member - 120)
+    expect(lifetimeSeconds).toBeLessThanOrEqual(SESSION_MAX_AGE_SECONDS.member)
   })
 
   it('AC-8: die Admin-Session läuft nach 8 Stunden ab', async () => {
@@ -46,7 +46,7 @@ describe('FV-1 Fundament & Login-Gate – Session', () => {
   })
 
   it('AC-7: die Session enthält keinen Passwort-Hash', async () => {
-    const cookie = await signIn('guest', '127.0.0.23')
+    const cookie = await signIn('member', '127.0.0.23')
     const session = await (await get('/api/_auth/session', cookie)).json()
 
     expect(JSON.stringify(session)).not.toContain('scrypt$')
@@ -54,7 +54,7 @@ describe('FV-1 Fundament & Login-Gate – Session', () => {
   })
 
   it('AC-12: Abmelden verwirft die Session', async () => {
-    const cookie = await signIn('guest', '127.0.0.24')
+    const cookie = await signIn('member', '127.0.0.24')
 
     const loggedOut = await fetch('/api/auth/logout', {
       method: 'POST',

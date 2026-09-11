@@ -9,16 +9,21 @@ import { users } from './schema'
 export interface SeedAccounts {
   adminEmail: string
   adminPassword: string
-  guestEmail: string
-  guestPassword: string
+  memberEmail: string
+  memberPassword: string
 }
 
 /**
- * Legt das geteilte Gast-Konto und den Erst-Admin an.
+ * Legt den Erst-Admin und ein erstes Mitgliedskonto an (FV-15).
+ *
+ * Bis FV-15 war das zweite Konto ein einziges, geteiltes Gast-Konto fuer die ganze Wehr.
+ * Seit persoenliche Mitgliedskonten das Modell sind, bleibt dieser Seed-Eintrag ein
+ * gewoehnliches Mitgliedskonto – der Startpunkt, bevor die Wehrfuehrung ueber die
+ * Benutzerverwaltung (FV-16) weitere, wirklich persoenliche Konten anlegt.
  *
  * Idempotent: existiert die E-Mail bereits, bleibt der Datensatz unveraendert – ein Neustart
  * setzt also niemals ein zwischenzeitlich geaendertes Passwort zurueck (FV-1, AC-9).
- * Der Erst-Admin wird mit `mustChangePassword` angelegt (FV-1, AC-10).
+ * Beide Konten werden mit `mustChangePassword` angelegt (FV-1, AC-10).
  */
 export async function seedAccounts(db: AppDatabase, accounts: SeedAccounts) {
   const created: string[] = []
@@ -26,7 +31,7 @@ export async function seedAccounts(db: AppDatabase, accounts: SeedAccounts) {
   const ensure = async (
     email: string,
     password: string,
-    role: 'admin' | 'guest',
+    role: 'admin' | 'member',
     displayName: string,
   ) => {
     const existing = db.select({ id: users.id }).from(users).where(eq(users.email, email)).get()
@@ -46,7 +51,7 @@ export async function seedAccounts(db: AppDatabase, accounts: SeedAccounts) {
   }
 
   await ensure(accounts.adminEmail, accounts.adminPassword, 'admin', 'Wehrführung')
-  await ensure(accounts.guestEmail, accounts.guestPassword, 'guest', 'Gast-Zugang')
+  await ensure(accounts.memberEmail, accounts.memberPassword, 'member', 'Mitglied')
 
   return created
 }
@@ -56,8 +61,8 @@ export function readSeedEnv(env: NodeJS.ProcessEnv = process.env): SeedAccounts 
   const required = [
     'NUXT_ADMIN_EMAIL',
     'NUXT_ADMIN_PASSWORD',
-    'NUXT_GUEST_EMAIL',
-    'NUXT_GUEST_PASSWORD',
+    'NUXT_MEMBER_EMAIL',
+    'NUXT_MEMBER_PASSWORD',
   ] as const
 
   const missing = required.filter(key => !env[key])
@@ -70,8 +75,8 @@ export function readSeedEnv(env: NodeJS.ProcessEnv = process.env): SeedAccounts 
   return {
     adminEmail: env.NUXT_ADMIN_EMAIL!,
     adminPassword: env.NUXT_ADMIN_PASSWORD!,
-    guestEmail: env.NUXT_GUEST_EMAIL!,
-    guestPassword: env.NUXT_GUEST_PASSWORD!,
+    memberEmail: env.NUXT_MEMBER_EMAIL!,
+    memberPassword: env.NUXT_MEMBER_PASSWORD!,
   }
 }
 

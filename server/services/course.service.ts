@@ -52,7 +52,7 @@ const cardColumns = {
 }
 
 /**
- * Übersicht fuer die Gast-Ansicht: nur kommende und laufende Lehrgaenge (FV-2, AC-1),
+ * Übersicht fuer die Mitglied-Ansicht: nur kommende und laufende Lehrgaenge (FV-2, AC-1),
  * sortiert nach Beginn.
  */
 export function listUpcomingCourses(query: CourseListQuery, now: Date = new Date()) {

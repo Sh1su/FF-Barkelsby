@@ -90,15 +90,15 @@ export default defineNuxtConfig({
     // Seed-Zugangsdaten fuer den ersten Start (siehe .env.example).
     adminEmail: '',
     adminPassword: '',
-    guestEmail: '',
-    guestPassword: '',
+    memberEmail: '',
+    memberPassword: '',
     // SMTP-Relay (FV-4). Leer = Mailversand deaktiviert, es wird nur protokolliert.
     smtpHost: '',
     smtpPort: '587',
     smtpUser: '',
     smtpPassword: '',
     smtpFrom: '',
-    // Das Session-Cookie wird auf die laengere der beiden Laufzeiten gesetzt (Gast, 30 Tage).
+    // Das Session-Cookie wird auf die laengere der beiden Laufzeiten gesetzt (Mitglied, 30 Tage).
     // Die tatsaechliche Gueltigkeit steht als `expiresAt` in der Session und wird
     // serverseitig in server/middleware/auth.ts geprueft (FV-1, AC-8).
     session: {

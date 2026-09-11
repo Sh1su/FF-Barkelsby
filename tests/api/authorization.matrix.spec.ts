@@ -20,7 +20,7 @@ interface MatrixEntry {
   path: () => string
   body?: () => Record<string, unknown>
   anonymous: number
-  guest: number
+  member: number
   admin: number
 }
 
@@ -43,7 +43,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/health',
     path: () => '/api/health',
     anonymous: 200,
-    guest: 200,
+    member: 200,
     admin: 200,
   },
   {
@@ -52,7 +52,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => '/api/auth/login',
     body: () => ({ email: 'niemand@test.local', password: 'falsches-passwort' }),
     anonymous: 401,
-    guest: 401,
+    member: 401,
     admin: 401,
   },
   {
@@ -60,7 +60,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/auth/logout',
     path: () => '/api/auth/logout',
     anonymous: 401,
-    guest: 200,
+    member: 200,
     admin: 200,
   },
   {
@@ -72,7 +72,7 @@ const MATRIX: MatrixEntry[] = [
       newPassword: 'ein-ausreichend-langes-passwort',
     }),
     anonymous: 401,
-    guest: 400,
+    member: 400,
     admin: 400,
   },
   {
@@ -80,7 +80,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/courses',
     path: () => '/api/courses',
     anonymous: 401,
-    guest: 200,
+    member: 200,
     admin: 200,
   },
   {
@@ -88,7 +88,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/courses/[id]',
     path: () => `/api/courses/${courseId}`,
     anonymous: 401,
-    guest: 200,
+    member: 200,
     admin: 200,
   },
   {
@@ -96,7 +96,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/courses/[id]/cover.svg',
     path: () => `/api/courses/${courseId}/cover.svg`,
     anonymous: 401,
-    guest: 200,
+    member: 200,
     admin: 200,
   },
   {
@@ -110,9 +110,9 @@ const MATRIX: MatrixEntry[] = [
       consent: true,
     }),
     anonymous: 401,
-    // Gast und Admin duerfen beide anmelden; die zweite Anmeldung derselben Adresse
+    // Mitglied und Admin duerfen beide anmelden; die zweite Anmeldung derselben Adresse
     // ergibt 409 – deshalb bekommt jede Rolle ihre eigene Adresse (siehe unten).
-    guest: 201,
+    member: 201,
     admin: 409,
   },
   {
@@ -120,7 +120,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/abmeldung/[token]',
     path: () => '/api/abmeldung/unbekannter-token-fuer-die-matrix',
     anonymous: 404,
-    guest: 404,
+    member: 404,
     admin: 404,
   },
   {
@@ -128,7 +128,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/abmeldung/[token]',
     path: () => '/api/abmeldung/unbekannter-token-fuer-die-matrix',
     anonymous: 404,
-    guest: 404,
+    member: 404,
     admin: 404,
   },
   {
@@ -136,7 +136,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/courses',
     path: () => '/api/admin/courses',
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -149,7 +149,7 @@ const MATRIX: MatrixEntry[] = [
       endsOn: isoInDays(60),
     }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 201,
   },
   {
@@ -158,7 +158,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => `/api/admin/courses/${editableCourseId}`,
     body: () => ({ summary: 'Von der Matrix bearbeitet' }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -167,7 +167,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => `/api/admin/courses/${editableCourseId}/cancel`,
     body: () => ({ cancelled: true }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -175,7 +175,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/courses/[id]',
     path: () => `/api/admin/courses/${deletableCourseId}`,
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -183,7 +183,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/courses/[id]/mails',
     path: () => `/api/admin/courses/${courseId}/mails`,
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -191,7 +191,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/signups',
     path: () => '/api/admin/signups',
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -200,7 +200,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => '/api/admin/signups/gibt-es-nicht',
     body: () => ({ status: 'bestaetigt' }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 404,
   },
   {
@@ -208,7 +208,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/courses/[id]/signups.csv',
     path: () => `/api/admin/courses/${courseId}/signups.csv`,
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -216,7 +216,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/users',
     path: () => '/api/admin/users',
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -229,8 +229,8 @@ const MATRIX: MatrixEntry[] = [
       password: 'ein-langes-startpasswort',
     }),
     anonymous: 401,
-    guest: 403,
-    // Beim Admin-Durchlauf existiert die Kennung aus dem Gast-Durchlauf noch nicht,
+    member: 403,
+    // Beim Admin-Durchlauf existiert die Kennung aus dem Mitglied-Durchlauf noch nicht,
     // deshalb 201; ein zweiter Aufruf ergaebe 409.
     admin: 201,
   },
@@ -240,7 +240,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => '/api/admin/users/gibt-es-nicht',
     body: () => ({ active: true }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 404,
   },
   {
@@ -248,7 +248,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/cover-preview.svg',
     path: () => '/api/admin/cover-preview.svg?motif=1&palette=2',
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -256,7 +256,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/branding',
     path: () => '/api/branding',
     anonymous: 200,
-    guest: 200,
+    member: 200,
     admin: 200,
   },
   {
@@ -265,7 +265,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => '/api/admin/settings/branding',
     body: () => ({ name: 'Freiwillige Feuerwehr Matrixdorf', shortName: 'FM' }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -273,9 +273,9 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/settings/branding/logo',
     path: () => '/api/admin/settings/branding/logo',
     // Kein multipart/form-data im generischen `call()`-Helfer – der Admin-Aufruf erreicht die
-    // Route (anders als bei Gast/anonym), scheitert dort aber an der fehlenden Bilddatei.
+    // Route (anders als bei Mitglied/anonym), scheitert dort aber an der fehlenden Bilddatei.
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 400,
   },
   {
@@ -283,7 +283,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/settings/mail',
     path: () => '/api/admin/settings/mail',
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -294,7 +294,7 @@ const MATRIX: MatrixEntry[] = [
     // im nachfolgenden Testmail-Eintrag (.claude/rules/testing.md: kein Netzwerkzugriff).
     body: () => ({ host: '', port: 587, user: '', from: '' }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -303,7 +303,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => '/api/admin/settings/mail/test',
     body: () => ({ to: 'ziel@example.org' }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 422,
   },
   {
@@ -311,7 +311,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/settings/mail-templates',
     path: () => '/api/admin/settings/mail-templates',
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -320,7 +320,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => '/api/admin/settings/mail-templates/lehrgang-abgesagt',
     body: () => ({ subject: 'Betreff {{courseTitle}}', body: 'Text {{organisation}}' }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -328,7 +328,7 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/settings/mail-templates/[key]/reset',
     path: () => '/api/admin/settings/mail-templates/lehrgang-abgesagt/reset',
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
   {
@@ -337,7 +337,7 @@ const MATRIX: MatrixEntry[] = [
     path: () => '/api/admin/settings/mail-templates/lehrgang-abgesagt/preview',
     body: () => ({ subject: 'Betreff {{courseTitle}}', body: 'Text {{organisation}}' }),
     anonymous: 401,
-    guest: 403,
+    member: 403,
     admin: 200,
   },
 ]
@@ -396,9 +396,9 @@ describe('Autorisierungsmatrix', () => {
 
   // Vor jedem Eintrag neu anmelden: die Matrix ruft selbst /api/auth/logout auf,
   // was die Session danach ungueltig machen wuerde.
-  it.each(MATRIX)('AC-11: $method $route als Gast → $guest', async (entry) => {
-    const cookie = await signIn('guest', '127.0.5.4')
-    expect((await call(entry, cookie)).status).toBe(entry.guest)
+  it.each(MATRIX)('AC-11: $method $route als Mitglied → $member', async (entry) => {
+    const cookie = await signIn('member', '127.0.5.4')
+    expect((await call(entry, cookie)).status).toBe(entry.member)
   })
 
   it.each(MATRIX)('AC-13: $method $route als Admin → $admin', async (entry) => {

@@ -11,11 +11,11 @@ import { signIn } from '../helpers/session'
 await startTestServer('admin-settings')
 
 let adminCookie: string
-let guestCookie: string
+let memberCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.9.1')
-  guestCookie = await signIn('guest', '127.0.9.2')
+  memberCookie = await signIn('member', '127.0.9.2')
 })
 
 function admin(path: string, init: RequestInit = {}, cookie: string | null = adminCookie) {
@@ -43,7 +43,7 @@ describe('Erscheinungsbild', () => {
 
   it('weist Gäste und Unangemeldete bei PATCH ab', async () => {
     expect((await admin('/api/admin/settings/branding', { method: 'PATCH', body: '{}' }, null)).status).toBe(401)
-    expect((await admin('/api/admin/settings/branding', { method: 'PATCH', body: '{}' }, guestCookie)).status).toBe(403)
+    expect((await admin('/api/admin/settings/branding', { method: 'PATCH', body: '{}' }, memberCookie)).status).toBe(403)
   })
 
   it('speichert Name und Kurzname; die öffentliche Route zeigt sie danach', async () => {
@@ -99,7 +99,7 @@ describe('Erscheinungsbild', () => {
 describe('SMTP-Relay', () => {
   it('weist Gäste und Unangemeldete ab', async () => {
     expect((await admin('/api/admin/settings/mail', {}, null)).status).toBe(401)
-    expect((await admin('/api/admin/settings/mail', {}, guestCookie)).status).toBe(403)
+    expect((await admin('/api/admin/settings/mail', {}, memberCookie)).status).toBe(403)
   })
 
   it('liefert ohne gespeicherte Zeile leere Standardwerte', async () => {
@@ -163,7 +163,7 @@ describe('SMTP-Relay', () => {
 describe('E-Mail-Vorlagen', () => {
   it('weist Gäste und Unangemeldete bei der Liste ab', async () => {
     expect((await admin('/api/admin/settings/mail-templates', {}, null)).status).toBe(401)
-    expect((await admin('/api/admin/settings/mail-templates', {}, guestCookie)).status).toBe(403)
+    expect((await admin('/api/admin/settings/mail-templates', {}, memberCookie)).status).toBe(403)
   })
 
   it('liefert alle sechs Vorlagen, anfangs unverändert', async () => {

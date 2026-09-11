@@ -8,7 +8,7 @@ Abstimmungsrunden Q1–Q27 vom 2026-08-10.
 
 Eine selbst gehostete Webanwendung, mit der eine Freiwillige Feuerwehr ihre Lehrgänge veröffentlicht
 und die Teilnehmerlisten verwaltet. Angehörige der Wehr melden sich mit einem gemeinsamen
-Gast-Zugang an, sehen die kommenden Lehrgänge und bekunden mit drei Feldern ihr Interesse – ohne
+Mitglied-Zugang an, sehen die kommenden Lehrgänge und bekunden mit drei Feldern ihr Interesse – ohne
 persönliches Benutzerkonto. Die Wehrführung legt Lehrgänge im Kalender an, bestätigt oder lehnt
 Anmeldungen ab und verwaltet die Zugänge.
 
@@ -20,7 +20,7 @@ auf einem Volume; einziger externer Dienst ist ein SMTP-Relay für den Mailversa
 
 | Rolle | Zugang | Bedürfnisse |
 |-------|--------|-------------|
-| **Angehörige der Wehr** | geteiltes Gast-Konto | Kommende Lehrgänge sehen, Details und Programm lesen, Interesse bekunden, sich wieder abmelden |
+| **Angehörige der Wehr** | geteiltes Mitglied-Konto | Kommende Lehrgänge sehen, Details und Programm lesen, Interesse bekunden, sich wieder abmelden |
 | **Wehrführung / Verwaltung** | persönliches Admin-Konto | Lehrgänge anlegen und pflegen, Anmeldungen bestätigen oder ablehnen, Teilnehmerliste ausdrucken, Zugänge verwalten |
 
 Es gibt **kein** persönliches Konto für Teilnehmer und **kein** abgestuftes Rollenmodell darüber
@@ -30,7 +30,7 @@ hinaus. Wer sich anmeldet, hinterlässt Vorname, Nachname und E-Mail – mehr ni
 
 | Priorität | ID | Feature | Status |
 |-----------|----|---------|--------|
-| P0 | FV-1 | Fundament & Login-Gate (Gast + Admin, Sessions, Rate-Limit) | Planned |
+| P0 | FV-1 | Fundament & Login-Gate (Mitglied + Admin, Sessions, Rate-Limit) | Planned |
 | P0 | FV-2 | Lehrgangskatalog: Datenmodell, Übersicht, Detailseite, Motiv-Generator | Planned |
 | P0 | FV-3 | Admin: Monatskalender, Schnellanlage, Detail-Bearbeitung, Absage | Planned |
 | P0 | FV-4 | E-Mail-Infrastruktur (SMTP-Relay, Vorlagen, Fehlerprotokoll) | Roadmap |
@@ -47,7 +47,7 @@ je ein Branch, ein Pull Request und eine Abnahme pro Feature.
 ## Domänenmodell
 
 ```
-users (guest | admin)            – Zugang zum System, geteiltes Gast-Konto + persönliche Admins
+users (member | admin)            – Zugang zum System, geteiltes Mitglied-Konto + persönliche Admins
 instructors                      – Ausbilder mit Porträt, Rolle, Vita
 courses ──< course_days          – Lehrgang mit Programm je Tag
    │
@@ -117,7 +117,7 @@ Angehörige der Wehr, kein offenes Internet.
 
 ## Non-Goals
 
-- Kein persönliches Teilnehmerkonto, kein Rollenmodell über guest/admin hinaus
+- Kein persönliches Teilnehmerkonto, kein Rollenmodell über member/admin hinaus
 - Keine Punktekonten, Budgets, Zertifikatsverwaltung oder Pflichtfortbildungsüberwachung
 - Kein Learning-Management-System, keine Kursinhalte
 - Keine Mandantenfähigkeit (eine Wehr pro Installation)
@@ -142,3 +142,25 @@ Reporting und Audit-Log. Er entstand, weil das Design zum Zeitpunkt des Projekt-
 abrufbar war (siehe `SETUP.md`). Der Abgleich mit dem tatsächlichen Design hat gezeigt, dass keines
 dieser Konzepte Teil des Produkts ist. Die alten Feature-IDs FV-1 bis FV-12 sind ersatzlos entfallen;
 die Nummern wurden neu vergeben.
+
+## Revision am 2026-09-11
+
+Zwei der oben unter „Non-Goals" festgehaltenen Entscheidungen werden bewusst zurückgenommen:
+
+- „Kein persönliches Teilnehmerkonto, kein Rollenmodell über member/admin hinaus" – **entfällt.**
+  Jedes Mitglied der Wehr bekommt ein persönliches Konto (Rolle `member`), das geteilte
+  Mitglied-Konto entfällt. Das Rollenmodell bleibt zweistufig (`member`, `admin`) – **keine** dritte
+  Rolle, keine Hierarchie darüber hinaus.
+- Aus „Keine Punktekonten, Budgets, Zertifikatsverwaltung oder Pflichtfortbildungsüberwachung"
+  kommt **Voraussetzungen/Berechtigung und Abschluss-Tracking pro Lehrgang** neu hinzu: ein
+  Lehrgang kann andere Lehrgänge als Voraussetzung verlangen, und pro Mitglied wird festgehalten,
+  ob ein Lehrgang bereits absolviert wurde. Ein Mitglied sieht einen Lehrgang im Katalog nur, wenn
+  es entweder die Voraussetzungen erfüllt oder ihn bereits absolviert hat.
+
+**Was weiterhin nicht kommt** – der Rest von „Keine Punktekonten, Budgets, Zertifikatsverwaltung
+oder Pflichtfortbildungsüberwachung" bleibt in Kraft: kein Punktekonto, keine Budgets, kein
+Zertifikats-Upload mit Ablaufüberwachung, kein Genehmigungs-Workflow, kein Reporting/Audit-Log.
+Diese Revision ist **keine** Wiederbelebung des am 2026-08-10 verworfenen Enterprise-Modells,
+sondern eine gezielte, kleine Erweiterung um genau zwei Konzepte (persönliches Konto,
+Voraussetzung/Abschluss). Umsetzung als neue Features FV-15 bis FV-20, siehe
+`features/INDEX.md`.

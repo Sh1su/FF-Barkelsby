@@ -5,7 +5,7 @@ import { SESSION_MAX_AGE_SECONDS } from '../../../shared/constants'
 import { users } from '../../database/schema'
 
 /**
- * Anmeldung fuer Gast- und Admin-Konten (FV-1, AC-2 bis AC-8).
+ * Anmeldung fuer Mitglied- und Admin-Konten (FV-1, AC-2 bis AC-8).
  * Oeffentlich erreichbar, deshalb mit Rate Limit pro IP.
  */
 export default defineEventHandler(async (event) => {

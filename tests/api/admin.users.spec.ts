@@ -6,11 +6,11 @@ import { ACCOUNTS, signIn } from '../helpers/session'
 await startTestServer('admin-users')
 
 let adminCookie: string
-let guestCookie: string
+let memberCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.12.1')
-  guestCookie = await signIn('guest', '127.0.12.2')
+  memberCookie = await signIn('member', '127.0.12.2')
 })
 
 function admin(path: string, init: RequestInit = {}, cookie: string | null = adminCookie) {
@@ -47,14 +47,14 @@ async function legeAdminAn(email: string, password = 'ein-langes-startpasswort')
 describe('FV-7 Benutzerverwaltung – Liste und Anlegen', () => {
   it('AC-11: nur Admins sehen und ändern Konten', async () => {
     expect((await admin('/api/admin/users', {}, null)).status).toBe(401)
-    expect((await admin('/api/admin/users', {}, guestCookie)).status).toBe(403)
+    expect((await admin('/api/admin/users', {}, memberCookie)).status).toBe(403)
   })
 
   it('AC-1/AC-10: die Liste zeigt Kennung, Rolle und Zustand – aber keine Hashes', async () => {
     const liste = await konten()
 
     expect(liste.length).toBeGreaterThanOrEqual(2)
-    expect(liste.some(konto => konto.role === 'guest')).toBe(true)
+    expect(liste.some(konto => konto.role === 'member')).toBe(true)
     expect(liste.some(konto => konto.role === 'admin')).toBe(true)
     expect(JSON.stringify(liste)).not.toContain('scrypt$')
     expect(JSON.stringify(liste)).not.toContain('passwordHash')
@@ -94,7 +94,7 @@ describe('FV-7 Benutzerverwaltung – Liste und Anlegen', () => {
         email: 'rollenversuch@test.local',
         displayName: 'Versuch',
         password: 'ein-langes-startpasswort',
-        role: 'guest',
+        role: 'member',
       }),
     })
 
@@ -103,12 +103,12 @@ describe('FV-7 Benutzerverwaltung – Liste und Anlegen', () => {
 })
 
 describe('FV-7 Benutzerverwaltung – Ändern', () => {
-  it('AC-3: das Gast-Passwort lässt sich setzen und gilt sofort', async () => {
-    const gast = (await konten()).find(konto => konto.role === 'guest')!
+  it('AC-3: das Mitglied-Passwort lässt sich setzen und gilt sofort', async () => {
+    const mitglied = (await konten()).find(konto => konto.role === 'member')!
 
-    const response = await admin(`/api/admin/users/${gast.id}`, {
+    const response = await admin(`/api/admin/users/${mitglied.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ password: 'neues-gast-passwort-2026' }),
+      body: JSON.stringify({ password: 'neues-mitglied-passwort-2026' }),
     })
     expect(response.status).toBe(200)
 
@@ -116,7 +116,7 @@ describe('FV-7 Benutzerverwaltung – Ändern', () => {
     const neu = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.12.10' },
-      body: JSON.stringify({ email: gast.email, password: 'neues-gast-passwort-2026' }),
+      body: JSON.stringify({ email: mitglied.email, password: 'neues-mitglied-passwort-2026' }),
       redirect: 'manual',
     })
     expect(neu.status).toBe(200)
@@ -124,34 +124,41 @@ describe('FV-7 Benutzerverwaltung – Ändern', () => {
     const alt = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.12.11' },
-      body: JSON.stringify({ email: gast.email, password: 'test-gast-passwort-2026' }),
+      body: JSON.stringify({ email: mitglied.email, password: 'test-mitglied-passwort-2026' }),
       redirect: 'manual',
     })
     expect(alt.status).toBe(401)
   })
 
-  it('AC-4: die Kennung des Gast-Zugangs lässt sich ändern', async () => {
-    const gast = (await konten()).find(konto => konto.role === 'guest')!
+  it('AC-4: die Kennung des Mitglied-Zugangs lässt sich ändern', async () => {
+    const mitglied = (await konten()).find(konto => konto.role === 'member')!
 
-    const response = await admin(`/api/admin/users/${gast.id}`, {
+    const response = await admin(`/api/admin/users/${mitglied.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ email: 'neuer-gast@test.local' }),
+      body: JSON.stringify({ email: 'neuer-mitglied@test.local' }),
     })
 
     expect(response.status).toBe(200)
-    expect((await response.json()).email).toBe('neuer-gast@test.local')
+    expect((await response.json()).email).toBe('neuer-mitglied@test.local')
   })
 
-  it('AC-7: der Gast-Zugang lässt sich nicht deaktivieren', async () => {
-    const gast = (await konten()).find(konto => konto.role === 'guest')!
+  it('AC-7, FV-15 AC-4: ein Mitgliedskonto lässt sich abschalten – anders als früher der Gast-Zugang', async () => {
+    const mitglied = (await konten()).find(konto => konto.role === 'member')!
 
-    const response = await admin(`/api/admin/users/${gast.id}`, {
+    const response = await admin(`/api/admin/users/${mitglied.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ active: false }),
     })
 
-    expect(response.status).toBe(422)
-    expect((await response.json()).statusMessage).toContain('Gast-Zugang')
+    expect(response.status).toBe(200)
+    expect((await response.json()).active).toBe(false)
+
+    // Zustand zurücksetzen, damit nachfolgende Tests dieser Datei ein aktives
+    // Mitgliedskonto vorfinden.
+    await admin(`/api/admin/users/${mitglied.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ active: true }),
+    })
   })
 
   it('AC-5/AC-9: ein deaktiviertes Konto kommt nicht mehr herein', async () => {

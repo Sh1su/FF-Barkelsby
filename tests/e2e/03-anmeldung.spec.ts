@@ -35,7 +35,7 @@ test.describe.serial('FV-5 Interessensbekundung', () => {
   })
 
   test('AC-1: drei Felder plus Einwilligung, dann Bestätigung', async ({ page }) => {
-    await signIn(page, 'guest')
+    await signIn(page, 'member')
     await page.goto(`/lehrgang/${lehrgangId}`)
 
     await page.getByTestId('course-signup-button').click()
@@ -60,7 +60,7 @@ test.describe.serial('FV-5 Interessensbekundung', () => {
   })
 
   test('AC-4: dieselbe Adresse wird beim zweiten Mal abgewiesen', async ({ page }) => {
-    await signIn(page, 'guest')
+    await signIn(page, 'member')
     await page.goto(`/lehrgang/${lehrgangId}`)
 
     await page.getByTestId('course-signup-button').click()
