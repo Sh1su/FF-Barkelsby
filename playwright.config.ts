@@ -37,8 +37,8 @@ export default defineConfig({
       NUXT_SESSION_PASSWORD: 'e2e-session-password-mindestens-32-zeichen',
       NUXT_ADMIN_EMAIL: 'wehrfuehrung@e2e.local',
       NUXT_ADMIN_PASSWORD: 'start-admin-passwort',
-      NUXT_GUEST_EMAIL: 'gast@e2e.local',
-      NUXT_GUEST_PASSWORD: 'start-gast-passwort',
+      NUXT_MEMBER_EMAIL: 'mitglied@e2e.local',
+      NUXT_MEMBER_PASSWORD: 'start-mitglied-passwort',
       // Kein echter Mailversand aus Tests heraus – sonst greift die produktive .env.
       NUXT_SMTP_HOST: '',
       NUXT_SMTP_USER: '',

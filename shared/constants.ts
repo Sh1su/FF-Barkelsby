@@ -1,6 +1,6 @@
 /** Von Client und Server gemeinsam genutzte Stammdaten. In v1 bewusst nicht pflegbar (PRD, Q15). */
 
-export const USER_ROLES = ['guest', 'admin'] as const
+export const USER_ROLES = ['member', 'admin'] as const
 export type UserRole = (typeof USER_ROLES)[number]
 
 export const COURSE_STATUSES = ['geplant', 'abgesagt'] as const
@@ -26,7 +26,7 @@ export const SMTP_TIMEOUT_MS = 10_000
 
 /** Sessiondauer je Rolle (PRD, Q10). */
 export const SESSION_MAX_AGE_SECONDS: Record<UserRole, number> = {
-  guest: 60 * 60 * 24 * 30,
+  member: 60 * 60 * 24 * 30,
   admin: 60 * 60 * 8,
 }
 

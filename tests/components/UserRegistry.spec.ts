@@ -4,17 +4,18 @@ import { mockNuxtImport, mountSuspended, registerEndpoint } from '@nuxt/test-uti
 import UserRegistry from '../../app/components/admin/UserRegistry.vue'
 
 /**
- * Komponententest zur Kontenliste (FV-7, QA-Befund BUG-7-2).
+ * Komponententest zur Kontenliste (FV-7, QA-Befund BUG-7-2; FV-15 fuer die Umstellung auf
+ * persoenliche Mitgliedskonten).
  * Geprueft werden die Zustaende gefuellt, leer und Fehler sowie die Regeln, die die
- * Oberflaeche selbst durchsetzt: kein Abschalten des Gast-Zugangs, Kennzeichnung des
- * eigenen Kontos und des noch gueltigen Startpassworts.
+ * Oberflaeche selbst durchsetzt: Kennzeichnung des eigenen Kontos und des noch gueltigen
+ * Startpassworts.
  */
 
-const GAST = {
-  id: 'gast-1',
-  email: 'gast@test.local',
-  role: 'guest',
-  displayName: 'Gast-Zugang',
+const MITGLIED = {
+  id: 'mitglied-1',
+  email: 'mitglied@test.local',
+  role: 'member',
+  displayName: 'Erika Musterfrau',
   mustChangePassword: false,
   active: true,
   createdAt: '2026-08-01T00:00:00.000Z',
@@ -54,7 +55,7 @@ describe('FV-7 Benutzerverwaltung – Kontenliste', () => {
     // `useFetch` legt seine Antwort unter einem festen Schluessel ab und teilt sie ueber alle
     // Tests der Datei – ohne Leeren des Zwischenspeichers saehe jeder Test die erste Antwort.
     clearNuxtData()
-    antwort = () => ({ items: [GAST, ADMIN, VERTRETUNG], total: 3, page: 1, limit: 25 })
+    antwort = () => ({ items: [MITGLIED, ADMIN, VERTRETUNG], total: 3, page: 1, limit: 25 })
   })
 
   it('AC-1: zeigt Kennung, Name, Rolle und Zustand je Konto', async () => {
@@ -62,8 +63,9 @@ describe('FV-7 Benutzerverwaltung – Kontenliste', () => {
     const text = component.text()
 
     expect(component.findAll('[data-testid="user-row"]')).toHaveLength(3)
-    expect(text).toContain('gast@test.local')
-    expect(text).toContain('Gast-Zugang')
+    expect(text).toContain('mitglied@test.local')
+    expect(text).toContain('Erika Musterfrau')
+    expect(text).toContain('Mitglied')
     expect(text).toContain('Verwaltung')
     expect(text).toContain('Aktiv')
     expect(text).toContain('Deaktiviert')
@@ -77,14 +79,22 @@ describe('FV-7 Benutzerverwaltung – Kontenliste', () => {
     expect(zeilen[1]!.find('[data-testid="user-startpasswort"]').exists()).toBe(false)
   })
 
-  it('AC-7: der Gast-Zugang hat keine Schaltfläche zum Abschalten', async () => {
+  it('AC-7, FV-15 AC-4: auch ein Mitgliedskonto hat eine Schaltfläche zum Abschalten', async () => {
+    // Bis FV-15 hatte hier ausschliesslich das eine geteilte Gast-Konto keine
+    // Schaltflaeche (es liess sich nie abschalten). Seit persoenliche Mitgliedskonten das
+    // ersetzen, gilt fuer sie dieselbe Regel wie fuer jedes andere Konto.
     const component = await mountSuspended(UserRegistry)
     const zeilen = component.findAll('[data-testid="user-row"]')
 
-    // Reihenfolge der Route: Rolle aufsteigend, also Gast zuerst.
-    expect(zeilen[0]!.text()).toContain('gast@test.local')
-    expect(zeilen[0]!.find('[data-testid="user-toggle"]').exists()).toBe(false)
-    expect(zeilen[1]!.find('[data-testid="user-toggle"]').exists()).toBe(true)
+    // Reihenfolge der Route: Rolle aufsteigend, also Mitglied zuerst.
+    expect(zeilen[0]!.text()).toContain('mitglied@test.local')
+    expect(zeilen[0]!.find('[data-testid="user-toggle"]').exists()).toBe(true)
+  })
+
+  it('FV-15, AC-7: kein Text setzt mehr ein geteiltes Gast-Konto voraus', async () => {
+    const component = await mountSuspended(UserRegistry)
+
+    expect(component.text()).not.toContain('Gast')
   })
 
   it('AC-5: ein deaktiviertes Konto bietet "Aktivieren" an', async () => {

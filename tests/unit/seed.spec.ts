@@ -13,8 +13,8 @@ import { verifyPasswordHash } from '../../server/utils/password'
 const ACCOUNTS = {
   adminEmail: 'wehrfuehrung@test.local',
   adminPassword: 'start-admin-passwort',
-  guestEmail: 'gast@test.local',
-  guestPassword: 'start-gast-passwort',
+  memberEmail: 'mitglied@test.local',
+  memberPassword: 'start-mitglied-passwort',
 }
 
 describe('FV-1 Fundament & Login-Gate – Seed', () => {
@@ -34,13 +34,13 @@ describe('FV-1 Fundament & Login-Gate – Seed', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('AC-9: legt genau ein Gast- und ein Admin-Konto an', async () => {
+  it('AC-9: legt genau ein Mitglied- und ein Admin-Konto an', async () => {
     await seedAccounts(db, ACCOUNTS)
 
     const rows = db.select().from(users).all()
     expect(rows).toHaveLength(2)
     expect(rows.filter(row => row.role === 'admin')).toHaveLength(1)
-    expect(rows.filter(row => row.role === 'guest')).toHaveLength(1)
+    expect(rows.filter(row => row.role === 'member')).toHaveLength(1)
   })
 
   it('AC-9: ist idempotent und überschreibt geänderte Passwörter nicht', async () => {
@@ -71,6 +71,6 @@ describe('FV-1 Fundament & Login-Gate – Seed', () => {
 
   it('AC-9: bricht bei fehlenden Umgebungsvariablen mit klarer Meldung ab', () => {
     expect(() => readSeedEnv({})).toThrowError(/NUXT_ADMIN_EMAIL/)
-    expect(() => readSeedEnv({ NUXT_ADMIN_EMAIL: 'a@b.c' })).toThrowError(/NUXT_GUEST_PASSWORD/)
+    expect(() => readSeedEnv({ NUXT_ADMIN_EMAIL: 'a@b.c' })).toThrowError(/NUXT_MEMBER_PASSWORD/)
   })
 })

@@ -6,12 +6,12 @@ import { createCourse, isoInDays } from '../factories/course'
 
 await startTestServer('courses-list')
 
-let guestCookie: string
+let memberCookie: string
 let adminCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.1.1')
-  guestCookie = await signIn('guest', '127.0.1.2')
+  memberCookie = await signIn('member', '127.0.1.2')
 
   await createCourse(adminCookie, {
     title: 'Truppmann Grundausbildung',
@@ -35,7 +35,7 @@ beforeAll(async () => {
   })
 })
 
-function list(query = '', cookie = guestCookie) {
+function list(query = '', cookie = memberCookie) {
   return fetch(`/api/courses${query}`, { headers: { cookie }, redirect: 'manual' })
 }
 

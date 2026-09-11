@@ -16,7 +16,7 @@ const timestamps = {
     .default(sql`(unixepoch())`),
 }
 
-/** Zugang zum System. Genau ein geteiltes Gast-Konto, dazu persoenliche Admin-Konten. */
+/** Zugang zum System. Persoenliche Konten je Mitglied (`member`) und Admin-Konten (FV-15). */
 export const users = sqliteTable(
   'users',
   {
@@ -33,7 +33,7 @@ export const users = sqliteTable(
   },
   table => [
     uniqueIndex('users_email_unique').on(table.email),
-    check('users_role_check', sql`${table.role} in ('guest', 'admin')`),
+    check('users_role_check', sql`${table.role} in ('member', 'admin')`),
   ],
 )
 
@@ -42,7 +42,8 @@ export const users = sqliteTable(
  *
  * Die Session steckt in einem versiegelten Cookie – ohne diese Liste bliebe ein bereits
  * kopiertes Cookie bis zum Ablauf gueltig. Bewusst pro Session (`sid`) und nicht pro Konto:
- * das Gast-Konto ist geteilt, ein kontoweites Verwerfen wuerde die ganze Wehr abmelden.
+ * ein Mitglied kann auf mehreren Geraeten angemeldet sein, ein kontoweites Verwerfen
+ * wuerde auch die anderen, nicht betroffenen Sitzungen mit abmelden.
  */
 export const revokedSessions = sqliteTable(
   'revoked_sessions',

@@ -10,8 +10,8 @@ const buckets = new Map<string, Bucket>()
 /**
  * Rate Limit pro IP fuer die Anmeldung (FV-1, AC-5/AC-6).
  *
- * Bewusst pro IP und niemals pro Konto: das Gast-Konto ist geteilt, ein Konto-Lockout
- * wuerde die gesamte Wehr aussperren. In-Memory ist ausreichend, weil die Anwendung
+ * Bewusst pro IP und niemals pro Konto: ein Konto-Lockout liesse sich von aussen gegen
+ * ein einzelnes Mitglied auffuehren. In-Memory ist ausreichend, weil die Anwendung
  * als Einzelinstanz laeuft (PRD, Constraints).
  */
 export interface RateLimit {

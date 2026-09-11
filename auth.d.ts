@@ -12,7 +12,7 @@ declare module '#auth-utils' {
   interface UserSession {
     /** Kennung dieser Session – Grundlage der Sperrliste beim Abmelden. */
     sid: string
-    /** Rollenabhaengiges Ablaufdatum (Gast 30 Tage, Admin 8 Stunden). */
+    /** Rollenabhaengiges Ablaufdatum (Mitglied 30 Tage, Admin 8 Stunden). */
     expiresAt: number
     loggedInAt: number
   }

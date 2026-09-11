@@ -15,7 +15,7 @@ test.describe.serial('FV-2 Lehrgangskatalog – Layout', () => {
   for (const breakpoint of BREAKPOINTS) {
     test(`AC-12: die Übersicht scrollt bei ${breakpoint.width}px nicht horizontal`, async ({ page }) => {
       await page.setViewportSize({ width: breakpoint.width, height: breakpoint.height })
-      await signIn(page, 'guest')
+      await signIn(page, 'member')
 
       await expect(page.getByRole('heading', { name: 'Aktuelle Lehrgänge' })).toBeVisible()
 
@@ -30,7 +30,7 @@ test.describe.serial('FV-2 Lehrgangskatalog – Layout', () => {
 
   test('AC-12: das Suchfeld ist auf 375px mindestens 44px hoch', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await signIn(page, 'guest')
+    await signIn(page, 'member')
 
     const search = await page.getByTestId('course-search').boundingBox()
 
@@ -64,7 +64,7 @@ test.describe.serial('FV-2 Lehrgangskatalog – Layout', () => {
       expect(response.status(), await response.text()).toBe(201)
     }
 
-    await signIn(page, 'guest')
+    await signIn(page, 'member')
     await fillStable(page.getByTestId('course-search'), 'Layouttest')
 
     const cards = page.getByTestId('course-card')

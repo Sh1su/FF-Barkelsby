@@ -29,6 +29,12 @@
 | FV-12 | Konto-CLI (Kennung & Passwort) | In Progress | [FV-12-konto-cli.md](FV-12-konto-cli.md) | 2026-08-12 |
 | FV-13 | Lehrgangsfelder reduzieren | Approved | [FV-13-lehrgangsfelder-reduzieren.md](FV-13-lehrgangsfelder-reduzieren.md) | 2026-08-31 |
 | FV-14 | Plätze entfernen & Zeitraum-Kalender | Approved | [FV-14-plaetze-entfernen.md](FV-14-plaetze-entfernen.md) | 2026-09-01 |
+| FV-15 | PRD-Revision & persönliche Mitgliedskonten | Approved | [FV-15-mitgliedskonten.md](FV-15-mitgliedskonten.md) | 2026-09-11 |
+| FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Roadmap | – | – |
+| FV-17 | Lehrgangs-Voraussetzungen | Roadmap | – | – |
+| FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Roadmap | – | – |
+| FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Roadmap | – | – |
+| FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Roadmap | – | – |
 
 <!-- Add features above this line -->
 
@@ -42,6 +48,13 @@
 - FV-12 setzt FV-1 voraus (Konten, Passwort-Hashing) und ergänzt FV-7 um den Weg ohne Anmeldung
 - FV-13 reduziert das Datenmodell aus FV-2/FV-3 (Kategorie, Format, Uhrzeit, Ausbilder, Ort entfallen)
 - FV-14 setzt FV-13 voraus und reduziert zusätzlich FV-5/FV-6 (Platzzahl entfällt)
+- FV-15 setzt FV-1 und FV-7 voraus (löst das geteilte Gast-Konto durch persönliche Mitgliedskonten
+  ab); schaltet FV-16, FV-18, FV-19, FV-20 frei
+- FV-16 setzt FV-15 voraus (Rollenmodell `member`/`admin` muss existieren)
+- FV-17 setzt FV-2 und FV-3 voraus, ist unabhängig von FV-15/FV-16
+- FV-18 setzt FV-15 voraus (Abschluss braucht ein persönliches Konto)
+- FV-19 setzt FV-16, FV-17 und FV-18 voraus (Matrix zeigt Mitglieder × Lehrgänge inkl. Voraussetzung/Abschluss)
+- FV-20 setzt FV-15, FV-17 und FV-18 voraus (Katalog-Filter nutzt Voraussetzungs- und Abschlussdaten)
 
 ## Stand der Umsetzung (2026-08-10)
 
@@ -74,9 +87,23 @@ Aus der FV-7-QA offen geblieben, weil nicht FV-7 zuzurechnen:
 - Komponententests gibt es weiterhin nur für `CourseCard` und `UserRegistry`; unter anderem
   `SignupRegistry` (FV-6) hat keinen.
 
+## Stand der Umsetzung (2026-09-12)
+
+FV-15 (PRD-Revision & persönliche Mitgliedskonten) ist implementiert: Rollenmodell von
+`guest`/`admin` auf `member`/`admin` umgestellt (Migration `0007_strange_franklin_storm.sql`,
+inkl. `PRAGMA ignore_check_constraints` rund um die Datenkorrektur, da der alte CHECK den neuen
+Rollenwert selbst nicht zugelassen hätte), `darfDeaktivieren()` ohne Gast-Sonderfall, Seed/CLI/UI
+auf „Mitglied" umbenannt, `docs/PRD.md` um den Abschnitt „Revision am 2026-09-11" ergänzt (der
+verworfene Entwurf vom 2026-08-10 bleibt davon unberührt als Historie stehen). `npm run verify`
+grün: 350 Vitest-Tests, keine Abdeckungslücken. Abweichung von der ursprünglichen Spec: das
+vormalige geteilte Gast-Konto wird nicht deaktiviert, sondern zu einem gewöhnlichen
+Mitgliedskonto – Details in `FV-15-mitgliedskonten.md`. FV-7s AC-7 ist damit historisch (Hinweis
+in dessen Spec ergänzt). FV-16 bis FV-20 (Mitgliedskonten anlegen, Voraussetzungen,
+Abschluss-Tracking, Matrix, Katalog-Filter) sind noch nicht begonnen.
+
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,
 Punkten, Budgets, Zertifikaten) wurden am 2026-08-10 nach Abgleich mit dem Design verworfen und die
 Nummern neu vergeben. Begründung: `docs/PRD.md`, Abschnitt „Verworfen".
 
-## Next Available ID: FV-15
+## Next Available ID: FV-21

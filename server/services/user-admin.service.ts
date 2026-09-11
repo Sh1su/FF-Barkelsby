@@ -6,9 +6,10 @@ import { users } from '../database/schema'
 /**
  * Benutzerverwaltung (FV-7).
  *
- * Zwei Schutzregeln stehen ueber allem: es bleibt immer mindestens ein handlungsfaehiger
- * Admin uebrig, und das geteilte Gast-Konto verschwindet nie – sonst kaeme die Wehr nicht
- * mehr an die Lehrgangsuebersicht.
+ * Eine Schutzregel steht ueber allem: es bleibt immer mindestens ein handlungsfaehiger
+ * Admin uebrig. Bis FV-15 gab es daneben einen zweiten Sonderfall fuer das eine geteilte
+ * Gast-Konto – seit persoenliche Mitgliedskonten das abloesen, laesst sich jedes
+ * Mitgliedskonto wie jedes andere Konto deaktivieren.
  */
 
 export interface AccountView {
@@ -21,17 +22,18 @@ export interface AccountView {
   createdAt: Date
 }
 
-/** Reine Regel, damit sie ohne Datenbank pruefbar ist (FV-7, AC-6/AC-7). */
+/**
+ * Reine Regel, damit sie ohne Datenbank pruefbar ist (FV-7, AC-6; FV-15, AC-4).
+ *
+ * Ein Mitgliedskonto zaehlt nicht zu den Admin-Konten und faellt deshalb nie unter die
+ * Admin-Mindestzahl – es laesst sich also immer deaktivieren.
+ */
 export function darfDeaktivieren(
   konto: { role: UserRole },
   aktiveAdmins: number,
 ): { erlaubt: boolean, grund?: string } {
-  if (konto.role === 'guest') {
-    return {
-      erlaubt: false,
-      grund: 'Der Gast-Zugang wird gebraucht, damit die Wehr die Lehrgänge sieht. '
-        + 'Er lässt sich nur ändern, nicht abschalten.',
-    }
+  if (konto.role !== 'admin') {
+    return { erlaubt: true }
   }
 
   if (aktiveAdmins <= 1) {
@@ -59,8 +61,9 @@ export interface AccountList {
 /**
  * Kontenliste, seitenweise (.claude/rules/backend.md: jede Liste mit hartem Limit).
  *
- * Die Tabelle bleibt hier klein – ein Gast-Konto und eine Handvoll Admins –, das Limit ist
- * also weniger Schutz als Gleichlauf mit den uebrigen Listen-Endpunkten.
+ * Seit FV-15 bekommt jedes Mitglied ein eigenes Konto – die Tabelle waechst also mit der
+ * Wehr, das harte Limit ist hier kein reiner Formalismus mehr wie zu Zeiten des einen
+ * geteilten Gast-Kontos.
  */
 export function listAccounts(query: AccountListQuery = { page: 1, limit: 25 }): AccountList {
   const db = useDatabase()

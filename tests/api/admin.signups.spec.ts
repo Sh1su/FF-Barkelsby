@@ -9,11 +9,11 @@ await startTestServer('admin-signups')
 
 const DB = 'admin-signups'
 let adminCookie: string
-let guestCookie: string
+let memberCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.10.1')
-  guestCookie = await signIn('guest', '127.0.10.2')
+  memberCookie = await signIn('member', '127.0.10.2')
 })
 
 function admin(path: string, init: RequestInit = {}, cookie: string | null = adminCookie) {
@@ -44,7 +44,7 @@ async function mails(courseId: string) {
 describe('FV-6 Registratur – Liste', () => {
   it('AC-9: nur Admins sehen die Registratur', async () => {
     expect((await admin('/api/admin/signups', {}, null)).status).toBe(401)
-    expect((await admin('/api/admin/signups', {}, guestCookie)).status).toBe(403)
+    expect((await admin('/api/admin/signups', {}, memberCookie)).status).toBe(403)
   })
 
   it('AC-1: zeigt Name, E-Mail, Lehrgang, Anmeldedatum und Status', async () => {
@@ -168,14 +168,14 @@ describe('FV-6 Registratur – Entscheidungen', () => {
     expect((await setzeStatus('gibt-es-nicht', 'bestaetigt')).status).toBe(404)
   })
 
-  it('AC-9: ein Gast darf nichts entscheiden', async () => {
+  it('AC-9: ein Mitglied darf nichts entscheiden', async () => {
     const course = await createCourse(adminCookie)
     const signupId = insertSignup(DB, course.id, 'offen')
 
     const response = await admin(
       `/api/admin/signups/${signupId}`,
       { method: 'PATCH', body: JSON.stringify({ status: 'bestaetigt' }) },
-      guestCookie,
+      memberCookie,
     )
 
     expect(response.status).toBe(403)

@@ -6,7 +6,7 @@ import { LOGIN_RATE_LIMIT } from '../../shared/constants'
 await startTestServer('auth-login')
 
 const ADMIN = { email: 'wehrfuehrung@test.local', password: 'start-admin-passwort' }
-const GUEST = { email: 'gast@test.local', password: 'start-gast-passwort' }
+const MEMBER = { email: 'mitglied@test.local', password: 'start-mitglied-passwort' }
 
 /** Jeder Test bekommt eine eigene Client-IP, damit das Rate Limit die anderen nicht stört. */
 function login(body: Record<string, unknown>, ip: string) {
@@ -19,11 +19,11 @@ function login(body: Record<string, unknown>, ip: string) {
 }
 
 describe('FV-1 Fundament & Login-Gate – Anmeldung', () => {
-  it('AC-2: meldet das Gast-Konto an und setzt ein Session-Cookie', async () => {
-    const response = await login(GUEST, '10.0.0.1')
+  it('AC-2: meldet das Mitglied-Konto an und setzt ein Session-Cookie', async () => {
+    const response = await login(MEMBER, '10.0.0.1')
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({ role: 'guest' })
+    expect(await response.json()).toMatchObject({ role: 'member' })
     expect(response.headers.get('set-cookie')).toContain('fireedu-session')
   })
 
@@ -35,7 +35,7 @@ describe('FV-1 Fundament & Login-Gate – Anmeldung', () => {
   })
 
   it('AC-4: antwortet bei falschem Passwort generisch mit 401', async () => {
-    const response = await login({ ...GUEST, password: 'falsch' }, '10.0.0.3')
+    const response = await login({ ...MEMBER, password: 'falsch' }, '10.0.0.3')
 
     expect(response.status).toBe(401)
     expect((await response.json()).statusMessage).toBe('E-Mail oder Passwort ist falsch.')
@@ -43,7 +43,7 @@ describe('FV-1 Fundament & Login-Gate – Anmeldung', () => {
 
   it('AC-4: unterscheidet unbekanntes Konto nicht von falschem Passwort', async () => {
     const unknown = await login({ email: 'niemand@test.local', password: 'falsch' }, '10.0.0.4')
-    const wrongPassword = await login({ ...GUEST, password: 'auch-falsch' }, '10.0.0.5')
+    const wrongPassword = await login({ ...MEMBER, password: 'auch-falsch' }, '10.0.0.5')
 
     expect(unknown.status).toBe(wrongPassword.status)
     expect((await unknown.json()).statusMessage).toBe((await wrongPassword.json()).statusMessage)
@@ -59,11 +59,11 @@ describe('FV-1 Fundament & Login-Gate – Anmeldung', () => {
     const ip = '10.0.0.7'
 
     for (let attempt = 0; attempt < LOGIN_RATE_LIMIT.maxAttempts; attempt++) {
-      const response = await login({ ...GUEST, password: 'falsch' }, ip)
+      const response = await login({ ...MEMBER, password: 'falsch' }, ip)
       expect(response.status).toBe(401)
     }
 
-    const blocked = await login({ ...GUEST, password: 'falsch' }, ip)
+    const blocked = await login({ ...MEMBER, password: 'falsch' }, ip)
     expect(blocked.status).toBe(429)
     expect(Number(blocked.headers.get('retry-after'))).toBeGreaterThan(0)
   })
@@ -72,11 +72,11 @@ describe('FV-1 Fundament & Login-Gate – Anmeldung', () => {
     const ip = '10.0.0.8'
 
     for (let attempt = 0; attempt <= LOGIN_RATE_LIMIT.maxAttempts; attempt++) {
-      await login({ ...GUEST, password: 'falsch' }, ip)
+      await login({ ...MEMBER, password: 'falsch' }, ip)
     }
-    expect((await login(GUEST, ip)).status).toBe(429)
+    expect((await login(MEMBER, ip)).status).toBe(429)
 
-    const fromElsewhere = await login(GUEST, '10.0.0.9')
+    const fromElsewhere = await login(MEMBER, '10.0.0.9')
     expect(fromElsewhere.status).toBe(200)
   })
 
@@ -84,13 +84,13 @@ describe('FV-1 Fundament & Login-Gate – Anmeldung', () => {
     const ip = '10.0.0.10'
 
     for (let attempt = 0; attempt < LOGIN_RATE_LIMIT.maxAttempts - 1; attempt++) {
-      await login({ ...GUEST, password: 'falsch' }, ip)
+      await login({ ...MEMBER, password: 'falsch' }, ip)
     }
 
-    expect((await login(GUEST, ip)).status).toBe(200)
+    expect((await login(MEMBER, ip)).status).toBe(200)
 
     for (let attempt = 0; attempt < LOGIN_RATE_LIMIT.maxAttempts; attempt++) {
-      expect((await login({ ...GUEST, password: 'falsch' }, ip)).status).toBe(401)
+      expect((await login({ ...MEMBER, password: 'falsch' }, ip)).status).toBe(401)
     }
   })
 })

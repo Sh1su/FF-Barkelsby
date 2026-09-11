@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { fillStable, login as signInWith } from './helpers'
 
 const ADMIN = { email: 'wehrfuehrung@e2e.local', password: 'e2e-admin-passwort-2026' }
-const GUEST = { email: 'gast@e2e.local', password: 'e2e-gast-passwort-2026' }
+const MEMBER = { email: 'mitglied@e2e.local', password: 'e2e-mitglied-passwort-2026' }
 
 async function login(page: import('@playwright/test').Page, email: string, password: string) {
   await signInWith(page, email, password)
@@ -25,10 +25,10 @@ const TITEL = 'E2E Atemschutz Fortbildung'
 
 test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
   test('AC-1: die Verwaltung ist nur für Admin-Konten erreichbar', async ({ page }) => {
-    await login(page, GUEST.email, GUEST.password)
+    await login(page, MEMBER.email, MEMBER.password)
     await page.goto('/verwaltung')
 
-    // Der Gast landet zurück auf der Übersicht und sieht keine Verwaltungsoberfläche.
+    // Das Mitglied landet zurück auf der Übersicht und sieht keine Verwaltungsoberfläche.
     await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:\d+\/$/)
     await expect(page.getByTestId('admin-tabs')).toHaveCount(0)
   })
@@ -70,8 +70,8 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
     await expect(page.getByTestId('calendar-event').filter({ hasText: TITEL })).toBeVisible()
   })
 
-  test('AC-7: der Gast sieht den neuen Lehrgang in der Übersicht', async ({ page }) => {
-    await login(page, GUEST.email, GUEST.password)
+  test('AC-7: das Mitglied sieht den neuen Lehrgang in der Übersicht', async ({ page }) => {
+    await login(page, MEMBER.email, MEMBER.password)
 
     await fillStable(page.getByTestId('course-search'), 'Atemschutz')
     await expect(page.getByTestId('course-card').filter({ hasText: TITEL })).toBeVisible()
@@ -84,7 +84,7 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
   })
 
   test('FV-2 AC-4: eine erfolglose Suche zeigt den Leerzustand mit Rücksetzer', async ({ page }) => {
-    await login(page, GUEST.email, GUEST.password)
+    await login(page, MEMBER.email, MEMBER.password)
 
     await fillStable(page.getByTestId('course-search'), 'gibtesnichtxyz')
     await expect(page.getByTestId('course-empty-state')).toBeVisible()
@@ -116,7 +116,7 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
 
     await expect(page.getByTestId('course-cancel-toggle')).toContainText('Absage zurücknehmen')
 
-    await login(page, GUEST.email, GUEST.password)
+    await login(page, MEMBER.email, MEMBER.password)
     await fillStable(page.getByTestId('course-search'), 'Atemschutz')
     await expect(
       page.getByTestId('course-card').filter({ hasText: TITEL }).getByTestId('course-cancelled-badge'),
@@ -140,7 +140,7 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
       },
     })).json()
 
-    await signInWith(page, GUEST.email, GUEST.password)
+    await signInWith(page, MEMBER.email, MEMBER.password)
     await expect(page).not.toHaveURL(/\/login/)
 
     // Alle Cookies zusammen – sonst faellt die Sitzung unter den Tisch.

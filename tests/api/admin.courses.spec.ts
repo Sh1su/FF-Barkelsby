@@ -8,11 +8,11 @@ import { insertSignup } from '../factories/signup'
 await startTestServer('admin-courses')
 
 let adminCookie: string
-let guestCookie: string
+let memberCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.4.1')
-  guestCookie = await signIn('guest', '127.0.4.2')
+  memberCookie = await signIn('member', '127.0.4.2')
 })
 
 /** `null` bedeutet ausdruecklich "ohne Anmeldung" – `undefined` wuerde den Default greifen lassen. */
@@ -31,7 +31,7 @@ function admin(path: string, init: RequestInit = {}, cookie: string | null = adm
 describe('FV-3 Admin-Kalender – Anlegen', () => {
   it('AC-13: weist Gäste mit 403 und Unangemeldete mit 401 ab', async () => {
     expect((await admin('/api/admin/courses', {}, null)).status).toBe(401)
-    expect((await admin('/api/admin/courses', {}, guestCookie)).status).toBe(403)
+    expect((await admin('/api/admin/courses', {}, memberCookie)).status).toBe(403)
   })
 
   it('AC-5: legt einen Lehrgang mit den Feldern der Schnellanlage an', async () => {
@@ -127,7 +127,7 @@ describe('FV-3 Admin-Kalender – Bearbeiten', () => {
 
     expect(response.status).toBe(200)
 
-    const detail = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: guestCookie } })).json()
+    const detail = await (await fetch(`/api/courses/${course.id}`, { headers: { cookie: memberCookie } })).json()
     expect(detail.description).toBe('Ausführliche Beschreibung.')
   })
 
@@ -192,7 +192,7 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toMatchObject({ status: 'abgesagt' })
 
-    const list = await (await fetch('/api/courses?q=Wird abgesagt', { headers: { cookie: guestCookie } })).json()
+    const list = await (await fetch('/api/courses?q=Wird abgesagt', { headers: { cookie: memberCookie } })).json()
     expect(list.items[0]).toMatchObject({ status: 'abgesagt' })
   })
 
@@ -218,7 +218,7 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
     expect(response.status).toBe(200)
 
     const detail = await fetch(`/api/courses/${course.id}`, {
-      headers: { cookie: guestCookie },
+      headers: { cookie: memberCookie },
       redirect: 'manual',
     })
     expect(detail.status).toBe(404)
@@ -264,15 +264,15 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
     expect(row.confirmedCount).toBe(1)
   })
 
-  it('AC-13: ein Gast darf weder absagen noch löschen', async () => {
+  it('AC-13: ein Mitglied darf weder absagen noch löschen', async () => {
     const course = await createCourse(adminCookie)
 
-    expect((await admin(`/api/admin/courses/${course.id}`, { method: 'DELETE' }, guestCookie)).status).toBe(403)
+    expect((await admin(`/api/admin/courses/${course.id}`, { method: 'DELETE' }, memberCookie)).status).toBe(403)
     expect(
       (await admin(
         `/api/admin/courses/${course.id}/cancel`,
         { method: 'POST', body: JSON.stringify({ cancelled: true }) },
-        guestCookie,
+        memberCookie,
       )).status,
     ).toBe(403)
   })

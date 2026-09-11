@@ -8,10 +8,10 @@ import { fetch } from '@nuxt/test-utils/e2e'
  * beliebiger Reihenfolge laufen koennen.
  */
 const ACCOUNTS = {
-  guest: {
-    email: 'gast@test.local',
-    startPassword: 'start-gast-passwort',
-    password: 'test-gast-passwort-2026',
+  member: {
+    email: 'mitglied@test.local',
+    startPassword: 'start-mitglied-passwort',
+    password: 'test-mitglied-passwort-2026',
   },
   admin: {
     email: 'wehrfuehrung@test.local',

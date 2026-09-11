@@ -9,11 +9,11 @@ await startTestServer('admin-signups-csv')
 
 const DB = 'admin-signups-csv'
 let adminCookie: string
-let guestCookie: string
+let memberCookie: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.11.1')
-  guestCookie = await signIn('guest', '127.0.11.2')
+  memberCookie = await signIn('member', '127.0.11.2')
 })
 
 function csv(courseId: string, cookie: string | null = adminCookie) {
@@ -28,7 +28,7 @@ describe('FV-6 Registratur – CSV-Export', () => {
     const course = await createCourse(adminCookie)
 
     expect((await csv(course.id, null)).status).toBe(401)
-    expect((await csv(course.id, guestCookie)).status).toBe(403)
+    expect((await csv(course.id, memberCookie)).status).toBe(403)
   })
 
   it('AC-7: liefert eine Datei mit Kopfzeile und allen nicht stornierten Anmeldungen', async () => {

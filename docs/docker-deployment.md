@@ -62,7 +62,7 @@ Quellcode und braucht `python3`/`make`/`g++` im Build-Stage (siehe oben). Altern
 verwenden, das ohne nativen Build-Schritt auskommt.
 
 Wichtig beim ersten Start des Containers: `bootstrap.ts` prüft `NUXT_ADMIN_EMAIL`, `NUXT_ADMIN_PASSWORD`,
-`NUXT_GUEST_EMAIL` und `NUXT_GUEST_PASSWORD` **vor** den Migrationen. Fehlen sie, wirft
+`NUXT_MEMBER_EMAIL` und `NUXT_MEMBER_PASSWORD` **vor** den Migrationen. Fehlen sie, wirft
 `readSeedEnv()` eine unbehandelte Ablehnung, *bevor* die Migrationen laufen – der Server startet trotzdem
 und `/api/health` meldet weiterhin `ok` (der Check prüft nur `select 1`, das auch auf einer unmigrierten
 Datenbank funktioniert). Ein Health-Check allein erkennt diesen Fall also nicht; in den Container-Logs
@@ -152,14 +152,14 @@ Datenbank ist gefährlicher als ein Neustart-Loop.
 # 1. Session-Secret erzeugen (min. 32 Zeichen)
 echo "NUXT_SESSION_PASSWORD=$(openssl rand -base64 32)" >> .env
 
-# 2. Zugangsdaten fuer Erst-Admin und Gast-Zugang setzen (Pflicht, siehe
+# 2. Zugangsdaten fuer Erst-Admin und Mitglied-Zugang setzen (Pflicht, siehe
 #    "Umgebungsvariablen" unten) - ohne diese vier bricht das Seeding vor den
 #    Migrationen ab, siehe Hinweis oben unter "Dockerfile (Multi-Stage)"
 cat >> .env <<'EOF'
 NUXT_ADMIN_EMAIL=wehrfuehrung@beispiel.example
 NUXT_ADMIN_PASSWORD=bitte-aendern
-NUXT_GUEST_EMAIL=gast@beispiel.example
-NUXT_GUEST_PASSWORD=bitte-aendern
+NUXT_MEMBER_EMAIL=mitglied@beispiel.example
+NUXT_MEMBER_PASSWORD=bitte-aendern
 EOF
 
 # 3. Starten - Migrationen und Konten-Seeding laufen automatisch beim ersten
@@ -181,12 +181,12 @@ laufende Anwendung.
 
 ```bash
 npm run user -- list                                   # welche Konten gibt es?
-npm run user -- set-email    guest gast@wehr.example   # Kennung ändern
+npm run user -- set-email    member mitglied@wehr.example   # Kennung ändern
 npm run user -- set-password admin                     # Passwort verdeckt abfragen
 npm run user -- set-password admin --wechsel-erzwingen # Wechsel beim nächsten Anmelden erzwingen
 ```
 
-`<konto>` ist eine Kennung, `guest` oder `admin`; die Kurzform `admin` bricht mit einer Auflistung
+`<konto>` ist eine Kennung, `member` oder `admin`; die Kurzform `admin` bricht mit einer Auflistung
 ab, sobald es mehrere Verwaltungskonten gibt. Die Datenbank kommt aus `NUXT_DB_PATH`.
 
 Im Container gibt es das Skript bislang **nicht** – es braucht `tsx`, und das Produktionsimage
@@ -202,7 +202,7 @@ Zwei Dinge sind bewusst so:
 
 - **Das Passwort wird nie als Argument entgegengenommen** – es stünde sonst in der Shell-Historie
   und in der Prozessliste. Für Skripte gibt es
-  `echo "…" | npm run user -- set-password guest --passwort-stdin`.
+  `echo "…" | npm run user -- set-password member --passwort-stdin`.
 - **Ein Passwortwechsel beendet keine laufenden Sitzungen** (gleiche Entscheidung wie in FV-7:
   sonst fliegt die halbe Wehr mitten in der Woche raus). Wer eine Sitzung wirklich beenden will,
   deaktiviert das Konto in der Oberfläche.
@@ -217,8 +217,8 @@ ohnehin – der Zugriff auf das Volume ist die eigentliche Schutzgrenze, nicht d
 | `NUXT_SESSION_PASSWORD` | ja | Secret zum Versiegeln des Session-Cookies, min. 32 Zeichen |
 | `NUXT_ADMIN_EMAIL` | ja | E-Mail des Erst-Admins (FV-1) – ohne bricht das Seeding vor den Migrationen ab |
 | `NUXT_ADMIN_PASSWORD` | ja | Startpasswort des Erst-Admins (Wechsel beim ersten Anmelden erzwungen) |
-| `NUXT_GUEST_EMAIL` | ja | Kennung des Gast-Zugangs |
-| `NUXT_GUEST_PASSWORD` | ja | Startpasswort des Gast-Zugangs |
+| `NUXT_MEMBER_EMAIL` | ja | Kennung des Mitglied-Zugangs |
+| `NUXT_MEMBER_PASSWORD` | ja | Startpasswort des Mitglied-Zugangs |
 | `NUXT_DB_PATH` | ja | Pfad zur SQLite-Datei, muss im Volume liegen (`/data/app.db`) |
 | `NUXT_UPLOAD_DIR` | ja | Verzeichnis für Nachweise (`/data/uploads`) |
 | `NUXT_PUBLIC_APP_URL` | ja | Öffentliche Basis-URL (für Links in E-Mails) |
@@ -253,7 +253,7 @@ in `.github/workflows/deploy.yml`) statt lokal zu bauen:
 
 ```bash
 ./ops/scripts/setup-deploy.sh --domain fortbildung.wehr.example
-# fragt interaktiv nach Admin-/Gast-Zugangsdaten und SMTP (optional), generiert
+# fragt interaktiv nach Admin-/Mitglied-Zugangsdaten und SMTP (optional), generiert
 # NUXT_SESSION_PASSWORD und Startpasswörter automatisch
 
 docker compose pull && docker compose up -d

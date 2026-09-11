@@ -5,6 +5,11 @@
 **Last Updated:** 2026-08-11
 **Abhängigkeiten:** FV-1 (Konten, Sessions, Passwort-Hashing)
 
+> **Hinweis (2026-09-11):** [FV-15](FV-15-mitgliedskonten.md) löst das eine geteilte Gast-Konto
+> durch persönliche Mitgliedskonten (Rolle `member` statt `guest`) ab. AC-3, AC-4 und AC-7 sind
+> in ihrem Wortlaut historisch: „Gast-Konto"/„Gast-Zugang" heißt seither „Mitgliedskonto", und
+> AC-7 gilt nicht mehr – ein Mitgliedskonto lässt sich seit FV-15 wie jedes andere deaktivieren.
+
 ## Ziel
 
 Der dritte Tab der Verwaltung: die Wehrführung pflegt den geteilten Gast-Zugang und die

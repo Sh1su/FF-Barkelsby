@@ -29,7 +29,7 @@ export const USAGE = `Konten verwalten (FV-12)
   npm run user -- set-email    <konto> <neue-kennung>
   npm run user -- set-password <konto> [--wechsel-erzwingen] [--passwort-stdin]
 
-<konto> ist eine Kennung (E-Mail), "guest" oder "admin".
+<konto> ist eine Kennung (E-Mail), "member" oder "admin".
 Die Datenbank kommt aus NUXT_DB_PATH (Vorgabe ./data/app.db).`
 
 export type Command =
@@ -144,12 +144,13 @@ type Konto = typeof users.$inferSelect
 /**
  * Konto anhand von Kennung oder Rolle finden.
  *
- * `admin` ist nur eine Bequemlichkeit fuer den Regelfall mit einem einzigen Verwaltungskonto.
- * Sobald es mehrere gibt (FV-7 erlaubt das ausdruecklich), waere die Kurzform eine Wette –
- * dann bricht sie mit der Liste der Kennungen ab, statt irgendeines zu treffen.
+ * `admin` und `member` sind nur eine Bequemlichkeit fuer den Regelfall mit einem einzigen
+ * Konto dieser Rolle. Gibt es mehrere (bei `admin` seit FV-7, bei `member` seit FV-15
+ * ausdruecklich der Normalfall), waere die Kurzform eine Wette – dann bricht sie mit der
+ * Liste der Kennungen ab, statt irgendeines zu treffen.
  */
 export function resolveAccount(db: AppDatabase, selector: string): Konto {
-  if (selector === 'guest' || selector === 'admin') {
+  if (selector === 'member' || selector === 'admin') {
     const treffer = db
       .select()
       .from(users)
@@ -195,7 +196,7 @@ function list(db: AppDatabase, io: CliIO) {
     .all()
 
   if (konten.length === 0) {
-    io.out('Keine Konten vorhanden. "npm run db:seed" legt Gast-Zugang und Erst-Admin an.')
+    io.out('Keine Konten vorhanden. "npm run db:seed" legt ein Mitgliedskonto und Erst-Admin an.')
     return
   }
 
@@ -253,8 +254,8 @@ async function setPassword(
     .set({
       passwordHash: await createPasswordHash(passwort),
       // Ohne Flag kein Zwangswechsel: der Betreiber setzt das Passwort bewusst und gibt es so
-      // heraus. Beim geteilten Gast-Zugang waere ein Zwangswechsel sogar schaedlich – der erste
-      // Anmelder wuerde es fuer die ganze Wehr aendern.
+      // heraus, etwa am Telefon direkt an das Mitglied – dann ist ein weiterer Wechsel
+      // unnoetig. Mit Flag weiss nur das Mitglied selbst das neue Passwort.
       mustChangePassword: forceChange,
       updatedAt: new Date(),
     })

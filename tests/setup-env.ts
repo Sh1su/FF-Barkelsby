@@ -7,8 +7,8 @@ const defaults: Record<string, string> = {
   NUXT_SESSION_PASSWORD: 'test-session-password-mindestens-32-zeichen',
   NUXT_ADMIN_EMAIL: 'wehrfuehrung@test.local',
   NUXT_ADMIN_PASSWORD: 'start-admin-passwort',
-  NUXT_GUEST_EMAIL: 'gast@test.local',
-  NUXT_GUEST_PASSWORD: 'start-gast-passwort',
+  NUXT_MEMBER_EMAIL: 'mitglied@test.local',
+  NUXT_MEMBER_PASSWORD: 'start-mitglied-passwort',
 }
 
 for (const [key, value] of Object.entries(defaults)) {

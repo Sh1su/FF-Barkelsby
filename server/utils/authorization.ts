@@ -5,7 +5,7 @@ import type { UserRole } from '../../shared/constants'
  * Zentrale Berechtigungslogik. SQLite kennt kein Row Level Security – jede Route
  * prueft hier, nicht in der Datenbank (.claude/rules/backend.md).
  *
- * Rollenmodell: `guest` < `admin`. Mehr gibt es bewusst nicht (PRD, Q1/Q8).
+ * Rollenmodell: `member` < `admin`. Mehr gibt es bewusst nicht (PRD, Q1/Q8).
  */
 
 export interface SessionUser {

@@ -7,10 +7,10 @@ export const ACCOUNTS = {
     start: 'start-admin-passwort',
     password: 'e2e-admin-passwort-2026',
   },
-  guest: {
-    email: 'gast@e2e.local',
-    start: 'start-gast-passwort',
-    password: 'e2e-gast-passwort-2026',
+  member: {
+    email: 'mitglied@e2e.local',
+    start: 'start-mitglied-passwort',
+    password: 'e2e-mitglied-passwort-2026',
   },
 } as const
 

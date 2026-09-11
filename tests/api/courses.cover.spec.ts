@@ -6,17 +6,17 @@ import { createCourse } from '../factories/course'
 
 await startTestServer('courses-cover')
 
-let guestCookie: string
+let memberCookie: string
 let adminCookie: string
 let courseId: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.3.1')
-  guestCookie = await signIn('guest', '127.0.3.2')
+  memberCookie = await signIn('member', '127.0.3.2')
   courseId = (await createCourse(adminCookie, { title: 'Motivtest <b>Lehrgang</b>' })).id
 })
 
-function cover(query = '', cookie = guestCookie) {
+function cover(query = '', cookie = memberCookie) {
   return fetch(`/api/courses/${courseId}/cover.svg${query}`, {
     headers: cookie ? { cookie } : {},
     redirect: 'manual',
@@ -71,7 +71,7 @@ describe('FV-2 Lehrgangskatalog – generiertes Titelbild', () => {
 
   it('liefert für einen unbekannten Lehrgang 404', async () => {
     const response = await fetch('/api/courses/unbekannt/cover.svg', {
-      headers: { cookie: guestCookie },
+      headers: { cookie: memberCookie },
       redirect: 'manual',
     })
 
