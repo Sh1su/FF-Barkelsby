@@ -32,7 +32,7 @@
 | FV-15 | PRD-Revision & persönliche Mitgliedskonten | Approved | [FV-15-mitgliedskonten.md](FV-15-mitgliedskonten.md) | 2026-09-11 |
 | FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Approved | [FV-16-mitgliedskonten-anlegen.md](FV-16-mitgliedskonten-anlegen.md) | 2026-09-12 |
 | FV-17 | Lehrgangs-Voraussetzungen | Planned | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
-| FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Planned | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
+| FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Approved | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
 | FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Roadmap | – | – |
 | FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Roadmap | – | – |
 
@@ -111,8 +111,21 @@ von der ursprünglichen Spec. `npm run verify` grün: 366 Vitest-Tests (davon ne
 `tests/api/admin.members.spec.ts`), `npm run test:e2e` grün: 40 Playwright-Tests, keine
 Abdeckungslücken.
 
-FV-17 bis FV-20 (Voraussetzungen, Abschluss-Tracking, Matrix, Katalog-Filter) sind noch nicht
-begonnen.
+FV-18 (Teilnahme-Erfassung / Abschluss-Historie) ist implementiert: neue Tabelle
+`course_completions` (Migration `0008_chief_goblin_queen.sql`, additiv, kein Rebuild), neuer
+Service `server/services/course-completion.service.ts` und drei neue Routen unter
+`/api/admin/courses/:id/completions` (`GET`, `POST`, `DELETE /:userId`), alle nur für Admins.
+`deleteCourse` lehnt das Löschen jetzt zusätzlich ab, wenn Abschlüsse existieren (permanenter
+Ausbildungsnachweis). Bewusst backend-only – die Bedienoberfläche kommt erst mit FV-19s
+Admin-Matrix. `npm run verify`: Lint/Typecheck/388 Vitest-Tests (34 Dateien) grün; `check:gaps`
+meldet für FV-18 selbst keine Lücke, schlägt aber gesamt fehl, weil die bereits vorhandene
+FV-17-Spec noch keine Tests hat (paralleler, unabhängiger PR, siehe FV-18-Spec für Details) – kein
+Regressionsfund dieser Aufgabe. Kleine Abweichung von der ursprünglichen Spec: die
+Existenzprüfung des Lehrgangs ist in `course-completion.service.ts` lokal dupliziert statt aus
+`course-admin.service.ts` wiederverwendet, um einen Zirkelbezug zu vermeiden (Details in der
+FV-18-Spec).
+
+FV-17, FV-19 und FV-20 (Voraussetzungen, Matrix, Katalog-Filter) sind noch nicht begonnen.
 
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,
