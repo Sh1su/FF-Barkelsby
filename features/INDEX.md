@@ -33,8 +33,8 @@
 | FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Approved | [FV-16-mitgliedskonten-anlegen.md](FV-16-mitgliedskonten-anlegen.md) | 2026-09-12 |
 | FV-17 | Lehrgangs-Voraussetzungen | Approved | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
 | FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Approved | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
-| FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Roadmap | – | – |
-| FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Roadmap | – | – |
+| FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Planned | [FV-19-admin-matrix.md](FV-19-admin-matrix.md) | 2026-09-12 |
+| FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Planned | [FV-20-katalog-sichtbarkeit.md](FV-20-katalog-sichtbarkeit.md) | 2026-09-12 |
 
 <!-- Add features above this line -->
 
@@ -53,8 +53,8 @@
 - FV-16 setzt FV-15 voraus (Rollenmodell `member`/`admin` muss existieren)
 - FV-17 setzt FV-2 und FV-3 voraus, ist unabhängig von FV-15/FV-16
 - FV-18 setzt FV-15 voraus (Abschluss braucht ein persönliches Konto)
-- FV-19 setzt FV-16, FV-17 und FV-18 voraus (Matrix zeigt Mitglieder × Lehrgänge inkl. Voraussetzung/Abschluss)
-- FV-20 setzt FV-15, FV-17 und FV-18 voraus (Katalog-Filter nutzt Voraussetzungs- und Abschlussdaten)
+- FV-19 setzt FV-16 und FV-18 voraus (Matrix zeigt Mitglieder × Lehrgänge, Abschluss-Status); **bewusst nicht** von FV-17/FV-20 abhängig, damit FV-19 und FV-20 parallel entstehen können – siehe Scope-Entscheidung in `FV-19-admin-matrix.md`. Eine Berechtigungs-Spalte in der Matrix ist ein möglicher späterer Nachschlag, kein Teil von FV-19.
+- FV-20 setzt FV-15, FV-17 und FV-18 voraus (Katalog-Filter nutzt Voraussetzungs- und Abschlussdaten); unabhängig von FV-19.
 
 ## Stand der Umsetzung (2026-08-10)
 
@@ -140,7 +140,11 @@ Dieselbe Kollision entsteht erneut, wenn #37/#38 später einzeln nach `main` gem
 mit demselben Vorgehen auflösen: Schema-Änderungen beider Seiten behalten, betroffene
 `0008`-Migrationsdatei(en) löschen und `npm run db:generate` neu laufen lassen.
 
-FV-19 und FV-20 (Matrix, Katalog-Filter) sind noch nicht begonnen.
+FV-19 und FV-20 sind spezifiziert (`/write-spec`) und werden als Nächstes parallel umgesetzt,
+jeweils auf Basis des Integrationsstands aus `integration/fv17-fv18` (Branch, in dem FV-17 und
+FV-18 zusammengeführt wurden, `npm run verify`/`npm run test:e2e` dort grün). FV-19 wurde bewusst
+auf reine Abschluss-Anzeige verkleinert (keine Berechtigungs-Spalte), damit es nicht auf FV-20
+warten muss – Details in `FV-19-admin-matrix.md`.
 
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,
