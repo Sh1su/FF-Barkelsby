@@ -13,7 +13,7 @@ await startTestServer('authorization-matrix')
  * Eine neue Route ohne Eintrag laesst diese Suite fehlschlagen – das ist Absicht.
  */
 interface MatrixEntry {
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   /** Routenmuster wie unter server/api abgelegt. */
   route: string
   /** Konkrete URL fuer den Aufruf. */
@@ -254,6 +254,23 @@ const MATRIX: MatrixEntry[] = [
     anonymous: 401,
     member: 403,
     admin: 201,
+  },
+  {
+    method: 'GET',
+    route: '/api/admin/courses/[id]/prerequisites',
+    path: () => `/api/admin/courses/${courseId}/prerequisites`,
+    anonymous: 401,
+    member: 403,
+    admin: 200,
+  },
+  {
+    method: 'PUT',
+    route: '/api/admin/courses/[id]/prerequisites',
+    path: () => `/api/admin/courses/${courseId}/prerequisites`,
+    body: () => ({ requiredCourseIds: [] }),
+    anonymous: 401,
+    member: 403,
+    admin: 200,
   },
   {
     method: 'GET',

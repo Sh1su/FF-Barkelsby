@@ -8,6 +8,10 @@ const id = computed(() => String(route.params.id))
 
 const { data: course, refresh } = await useFetch(() => `/api/courses/${id.value}`)
 const { data: mailData, refresh: refreshMails } = await useFetch(() => `/api/admin/courses/${id.value}/mails`)
+const { data: allCoursesData } = await useFetch('/api/admin/courses')
+const { data: prerequisitesData, refresh: refreshPrerequisites } = await useFetch(
+  () => `/api/admin/courses/${id.value}/prerequisites`,
+)
 
 useHead({ title: () => `${course.value?.title ?? 'Lehrgang'} bearbeiten` })
 
@@ -23,6 +27,41 @@ const state = reactive({
 
 const busy = ref(false)
 const errorMessage = ref('')
+
+// Voraussetzungen: eigener Speichervorgang, eigener Fehlerzustand (FV-17, Tech Design) – ein
+// Fehler hier soll das Speichern der übrigen Felder oben nicht blockieren.
+const prerequisiteOptions = computed(() =>
+  (allCoursesData.value?.items ?? [])
+    .filter(item => item.id !== id.value)
+    .map(item => ({ label: item.title, id: item.id })),
+)
+const selectedPrerequisites = ref<string[]>([])
+const prerequisitesBusy = ref(false)
+const prerequisitesError = ref('')
+
+watchEffect(() => {
+  selectedPrerequisites.value = (prerequisitesData.value?.items ?? []).map(item => item.id)
+})
+
+async function savePrerequisites() {
+  prerequisitesBusy.value = true
+  prerequisitesError.value = ''
+  try {
+    await $fetch(`/api/admin/courses/${id.value}/prerequisites`, {
+      method: 'PUT',
+      body: { requiredCourseIds: selectedPrerequisites.value },
+    })
+    toast.add({ title: 'Voraussetzungen gespeichert', color: 'success' })
+    await refreshPrerequisites()
+  }
+  catch (error) {
+    prerequisitesError.value = (error as { statusMessage?: string }).statusMessage
+      ?? 'Speichern der Voraussetzungen fehlgeschlagen.'
+  }
+  finally {
+    prerequisitesBusy.value = false
+  }
+}
 
 const MAIL_ICONS: Record<string, string> = {
   versendet: 'i-lucide-mail-check',
@@ -182,6 +221,40 @@ async function removeCourse() {
             v-model:palette="state.palette"
             :title="state.title"
           />
+        </div>
+
+        <div class="space-y-3 rounded-lg border border-default bg-default p-5" data-testid="prerequisites-section">
+          <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">
+            Voraussetzungen
+          </h2>
+          <UFormField label="Vorher abzuschließende Lehrgänge">
+            <USelectMenu
+              v-model="selectedPrerequisites"
+              :items="prerequisiteOptions"
+              value-key="id"
+              multiple
+              class="w-full"
+              placeholder="Keine Voraussetzungen"
+              data-testid="prerequisites-select"
+            />
+          </UFormField>
+          <UAlert
+            v-if="prerequisitesError"
+            color="error"
+            variant="subtle"
+            :title="prerequisitesError"
+            data-testid="prerequisites-error"
+          />
+          <UButton
+            block
+            variant="outline"
+            :loading="prerequisitesBusy"
+            :disabled="prerequisitesBusy"
+            data-testid="prerequisites-save"
+            @click="savePrerequisites"
+          >
+            Voraussetzungen speichern
+          </UButton>
         </div>
 
         <section

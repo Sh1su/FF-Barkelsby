@@ -145,6 +145,33 @@ export const signups = sqliteTable(
 )
 
 /**
+ * Kanten des Voraussetzungsgraphen zwischen Lehrgaengen (FV-17). Reine Beziehungspflege durch
+ * die Wehrfuehrung – ob ein *Mitglied* eine Voraussetzung erfuellt, wertet erst FV-20 aus.
+ * `onDelete: 'cascade'` raeumt die eigenen Kanten eines geloeschten Lehrgangs auf; Kanten, in
+ * denen er als `requiredCourseId` auftaucht, blockieren das Loeschen ueberhaupt erst
+ * (`assertNotRequiredByOthers`, AC-8) – kommen also nie zum Cascade.
+ */
+export const coursePrerequisites = sqliteTable(
+  'course_prerequisites',
+  {
+    id: text('id').primaryKey(),
+    courseId: text('course_id')
+      .notNull()
+      .references(() => courses.id, { onDelete: 'cascade' }),
+    requiredCourseId: text('required_course_id')
+      .notNull()
+      .references(() => courses.id, { onDelete: 'cascade' }),
+    ...timestamps,
+  },
+  table => [
+    uniqueIndex('course_prerequisites_pair_unique').on(table.courseId, table.requiredCourseId),
+    index('course_prerequisites_course_idx').on(table.courseId),
+    index('course_prerequisites_required_idx').on(table.requiredCourseId),
+    check('course_prerequisites_not_self_check', sql`${table.courseId} <> ${table.requiredCourseId}`),
+  ],
+)
+
+/**
  * Erscheinungsbild der Wehr, ueber die Verwaltung editierbar. Genau eine Zeile (`id = 'default'`)
  * – ohne sie gelten die Standardwerte aus `runtimeConfig.public.organisation` und das
  * mitgelieferte `public/logo.png` (siehe `branding.service.ts`).

@@ -6,6 +6,7 @@ import type {
 } from '../../shared/validation/course'
 import type { CourseStatus } from '../../shared/constants'
 import { courses, signups } from '../database/schema'
+import { assertNotRequiredByOthers } from './course-prerequisites.service'
 import { formatRange, notifyCourseRecipients } from './mail.service'
 
 /**
@@ -184,9 +185,10 @@ export async function transitionCourse(id: string, to: CourseStatus) {
   return updated
 }
 
-/** Löschen nur ohne Anmeldungen (FV-3, AC-12). */
+/** Löschen nur ohne Anmeldungen (FV-3, AC-12) und nicht als Voraussetzung anderer (FV-17, AC-8). */
 export function deleteCourse(id: string) {
   requireCourse(id)
+  assertNotRequiredByOthers(id)
 
   const existingSignups = countSignups(id)
   if (existingSignups > 0) {

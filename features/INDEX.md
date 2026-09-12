@@ -31,7 +31,7 @@
 | FV-14 | Plätze entfernen & Zeitraum-Kalender | Approved | [FV-14-plaetze-entfernen.md](FV-14-plaetze-entfernen.md) | 2026-09-01 |
 | FV-15 | PRD-Revision & persönliche Mitgliedskonten | Approved | [FV-15-mitgliedskonten.md](FV-15-mitgliedskonten.md) | 2026-09-11 |
 | FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Approved | [FV-16-mitgliedskonten-anlegen.md](FV-16-mitgliedskonten-anlegen.md) | 2026-09-12 |
-| FV-17 | Lehrgangs-Voraussetzungen | Planned | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
+| FV-17 | Lehrgangs-Voraussetzungen | Approved | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
 | FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Planned | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
 | FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Roadmap | – | – |
 | FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Roadmap | – | – |
@@ -111,8 +111,22 @@ von der ursprünglichen Spec. `npm run verify` grün: 366 Vitest-Tests (davon ne
 `tests/api/admin.members.spec.ts`), `npm run test:e2e` grün: 40 Playwright-Tests, keine
 Abdeckungslücken.
 
-FV-17 bis FV-20 (Voraussetzungen, Abschluss-Tracking, Matrix, Katalog-Filter) sind noch nicht
-begonnen.
+FV-17 (Lehrgangs-Voraussetzungen) ist implementiert: neue Tabelle `course_prerequisites`
+(Migration `0008_cloudy_squirrel_girl.sql`, reine `CREATE TABLE`), `PUT`/`GET
+/api/admin/courses/:id/prerequisites` pflegen bzw. lesen die Voraussetzungsmenge eines
+Lehrgangs, Zyklen (auch über mehrere Stationen) werden per Reachability-Suche vor dem Speichern
+abgelehnt (422), `deleteCourse` verweigert das Löschen eines Lehrgangs, der Voraussetzung für
+einen anderen ist (409). Die Bearbeitungsseite eines Lehrgangs hat ein
+Mehrfachauswahlfeld mit eigenem Speichervorgang. Keine inhaltliche Abweichung von einer
+Acceptance Criterion. `npm run verify`s Einzelschritte (Lint, Typecheck, 388 Vitest-Tests,
+`check:gaps` für FV-17 selbst) sind grün, `npm run test:e2e` ebenfalls; der zusammengesetzte
+`npm run verify`-Befehl endet dennoch mit Exit-Code 1, weil `check:gaps` für das parallel in
+einem eigenen Branch/Worktree in Arbeit befindliche **FV-18** (dessen Spec bereits im
+Basis-Commit dieses Branches steht) fehlende Tests meldet – ein vorbestehender Zustand,
+unabhängig von FV-17, der sich mit dessen Merge auflöst. Details in
+`FV-17-lehrgangs-voraussetzungen.md`.
+
+FV-18 bis FV-20 (Abschluss-Tracking, Matrix, Katalog-Filter) sind noch nicht begonnen.
 
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,
