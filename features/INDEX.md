@@ -34,7 +34,7 @@
 | FV-17 | Lehrgangs-Voraussetzungen | Approved | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
 | FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Approved | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
 | FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Planned | [FV-19-admin-matrix.md](FV-19-admin-matrix.md) | 2026-09-12 |
-| FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Planned | [FV-20-katalog-sichtbarkeit.md](FV-20-katalog-sichtbarkeit.md) | 2026-09-12 |
+| FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Approved | [FV-20-katalog-sichtbarkeit.md](FV-20-katalog-sichtbarkeit.md) | 2026-09-12 |
 
 <!-- Add features above this line -->
 
@@ -145,6 +145,25 @@ jeweils auf Basis des Integrationsstands aus `integration/fv17-fv18` (Branch, in
 FV-18 zusammengeführt wurden, `npm run verify`/`npm run test:e2e` dort grün). FV-19 wurde bewusst
 auf reine Abschluss-Anzeige verkleinert (keine Berechtigungs-Spalte), damit es nicht auf FV-20
 warten muss – Details in `FV-19-admin-matrix.md`.
+
+FV-20 (Voraussetzungs-Engine & Katalog-Sichtbarkeit) ist implementiert: neuer Service
+`server/services/eligibility.service.ts` (`isEligible`, `hasCompleted`, batch-taugliches
+`visibleCourseIds` für AC-7) liest ausschließlich die bestehenden Tabellen `course_prerequisites`
+(FV-17) und `course_completions` (FV-18), keine Schema-Änderung. `listUpcomingCourses` und
+`getCourseDetail` (`server/services/course.service.ts`) bekommen einen neuen `viewer`-Parameter
+(die Session aus `requireAuth`) und blenden für `member`-Sessions Lehrgänge ohne erfüllte
+Voraussetzung **und** ohne eigenen Abschluss aus (`GET /api/courses/:id` liefert dafür 404, nicht
+403); `admin`-Sessions bleiben unverändert ungefiltert. Zwei Abweichungen von der ursprünglichen
+Spec, beide dokumentiert in `FV-20-katalog-sichtbarkeit.md`: die vorgesehene Testdatei
+`tests/unit/eligibility.spec.ts` gibt es nicht – DB-lesende Service-Funktionen sind in diesem
+Projekt grundsätzlich nur über das `api`-Testprojekt (echter Nitro-Server) testbar, da
+`useDatabase()` ein reiner Nitro-Build-Auto-Import ist; die Tests liegen deshalb in
+`tests/api/eligibility.spec.ts`. Und FV-17s eigener AC-7-Test („Voraussetzungen filtern nichts im
+Katalog") musste inhaltlich angepasst werden, da FV-17s eigene Spec genau diese spätere
+Ersetzung durch FV-20 bereits ankündigte. `npm run verify` grün: 424 Vitest-Tests in 37 Dateien,
+`check:gaps` bestätigt FV-20 vollständig abgedeckt (der Gesamtbefehl endet dennoch mit
+Exit-Code 1, ausschließlich wegen des parallel noch unimplementierten FV-19 – siehe dort).
+`npm run test:e2e` unverändert grün (41 Playwright-Tests, FV-20 hat keine eigene UI).
 
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,
