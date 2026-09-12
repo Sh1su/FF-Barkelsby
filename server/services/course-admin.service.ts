@@ -6,6 +6,7 @@ import type {
 } from '../../shared/validation/course'
 import type { CourseStatus } from '../../shared/constants'
 import { courses, signups } from '../database/schema'
+import { hasCompletions } from './course-completion.service'
 import { formatRange, notifyCourseRecipients } from './mail.service'
 
 /**
@@ -184,7 +185,7 @@ export async function transitionCourse(id: string, to: CourseStatus) {
   return updated
 }
 
-/** Löschen nur ohne Anmeldungen (FV-3, AC-12). */
+/** Löschen nur ohne Anmeldungen und ohne Abschluesse (FV-3, AC-12; FV-18, AC-7). */
 export function deleteCourse(id: string) {
   requireCourse(id)
 
@@ -194,6 +195,16 @@ export function deleteCourse(id: string) {
       statusCode: 409,
       statusMessage:
         'Zu diesem Lehrgang gibt es bereits Anmeldungen. Bitte den Lehrgang absagen statt löschen.',
+    })
+  }
+
+  // Ein Abschluss ist permanenter Ausbildungsnachweis – niemals stiller Cascade-Verlust
+  // beim Loeschen des Lehrgangs (FV-18, AC-7).
+  if (hasCompletions(id)) {
+    throw createError({
+      statusCode: 409,
+      statusMessage:
+        'Zu diesem Lehrgang sind bereits Abschlüsse erfasst. Löschen ist deshalb nicht möglich.',
     })
   }
 

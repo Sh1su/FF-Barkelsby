@@ -145,6 +145,33 @@ export const signups = sqliteTable(
 )
 
 /**
+ * Abschluss-Historie je Mitglied und Lehrgang (FV-18) – unabhaengig von `signups` (FV-5), die
+ * nur den aktuellen Anmeldezyklus abbildet und keine Personenkonten kennt. Ein Abschluss ist
+ * personenbezogener Ausbildungsnachweis: er bleibt bestehen, auch wenn das Konto spaeter
+ * deaktiviert wird, und blockiert das Loeschen des zugehoerigen Lehrgangs (siehe `deleteCourse`).
+ */
+export const courseCompletions = sqliteTable(
+  'course_completions',
+  {
+    id: text('id').primaryKey(),
+    courseId: text('course_id')
+      .notNull()
+      .references(() => courses.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    completedAt: integer('completed_at', { mode: 'timestamp' }).notNull(),
+    note: text('note'),
+    ...timestamps,
+  },
+  table => [
+    // Verhindert die doppelte Erfassung desselben Abschlusses (FV-18, AC-1/AC-3).
+    uniqueIndex('course_completions_course_user_unique').on(table.courseId, table.userId),
+    index('course_completions_user_idx').on(table.userId),
+  ],
+)
+
+/**
  * Erscheinungsbild der Wehr, ueber die Verwaltung editierbar. Genau eine Zeile (`id = 'default'`)
  * – ohne sie gelten die Standardwerte aus `runtimeConfig.public.organisation` und das
  * mitgelieferte `public/logo.png` (siehe `branding.service.ts`).

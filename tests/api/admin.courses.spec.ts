@@ -241,6 +241,22 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
     expect((await admin(`/api/admin/courses/${course.id}`, { method: 'DELETE' })).status).toBe(409)
   })
 
+  it('FV-18, AC-7: ein erfasster Abschluss verhindert ebenfalls das Löschen', async () => {
+    const course = await createCourse(adminCookie)
+    const mitglied = await (await admin('/api/admin/members', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'loeschschutz-abschluss@test.local', displayName: 'Löschschutz' }),
+    })).json()
+    await admin(`/api/admin/courses/${course.id}/completions`, {
+      method: 'POST',
+      body: JSON.stringify({ userId: mitglied.id }),
+    })
+
+    const response = await admin(`/api/admin/courses/${course.id}`, { method: 'DELETE' })
+
+    expect(response.status).toBe(409)
+  })
+
   it('FV-14, AC-1: eine mitgeschickte Platzzahl beim Bearbeiten wird ignoriert', async () => {
     const course = await createCourse(adminCookie)
 
