@@ -49,6 +49,8 @@ export function darfDeaktivieren(
 export interface AccountListQuery {
   page: number
   limit: number
+  /** FV-16, AC-5: Liste auf eine Rolle eingrenzen, z.B. um nur Mitglieder anzuzeigen. */
+  role?: UserRole
 }
 
 export interface AccountList {
@@ -67,6 +69,7 @@ export interface AccountList {
  */
 export function listAccounts(query: AccountListQuery = { page: 1, limit: 25 }): AccountList {
   const db = useDatabase()
+  const filter = query.role ? eq(users.role, query.role) : undefined
 
   const items = db
     .select({
@@ -79,13 +82,14 @@ export function listAccounts(query: AccountListQuery = { page: 1, limit: 25 }): 
       createdAt: users.createdAt,
     })
     .from(users)
+    .where(filter)
     .orderBy(asc(users.role), asc(users.email))
     .limit(query.limit)
     .offset((query.page - 1) * query.limit)
     .all()
     .map(({ deactivatedAt, ...rest }) => ({ ...rest, active: deactivatedAt === null }))
 
-  const total = db.select({ value: count() }).from(users).get()?.value ?? 0
+  const total = db.select({ value: count() }).from(users).where(filter).get()?.value ?? 0
 
   return { items, total, page: query.page, limit: query.limit }
 }
@@ -161,6 +165,42 @@ export async function createAdminAccount(input: {
     .run()
 
   return accountView(id)
+}
+
+/**
+ * Legt ein Mitgliedskonto an (FV-16, AC-1 bis AC-3).
+ *
+ * Anders als `createAdminAccount` ist `password` optional: fehlt es, erzeugt der Server eines
+ * und gibt es einmalig zurueck (`generatedPassword`) – ein zweites Mal ist es nirgends
+ * abrufbar, auch nicht ueber diese Funktion (der Hash laesst sich nicht umkehren).
+ */
+export async function createMemberAccount(input: {
+  email: string
+  displayName: string
+  password?: string
+}): Promise<{ account: AccountView, generatedPassword?: string }> {
+  assertEmailFrei(input.email)
+
+  const generatedPassword = input.password ? undefined : generatePassword()
+  const password = input.password ?? generatedPassword!
+
+  const id = randomUUID()
+
+  useDatabase()
+    .insert(users)
+    .values({
+      id,
+      email: input.email,
+      passwordHash: await createPasswordHash(password),
+      role: 'member',
+      displayName: input.displayName,
+      // Wer immer das Startpasswort kennt (Admin oder Server-Zufall) – das Mitglied selbst
+      // kennt es noch nicht, also Wechsel beim ersten Anmelden erzwingen.
+      mustChangePassword: true,
+    })
+    .run()
+
+  return { account: accountView(id), generatedPassword }
 }
 
 export interface UpdateAccountInput {

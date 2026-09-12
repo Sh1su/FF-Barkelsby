@@ -60,6 +60,25 @@ describe('FV-7 Benutzerverwaltung – Liste und Anlegen', () => {
     expect(JSON.stringify(liste)).not.toContain('passwordHash')
   })
 
+  it('FV-16, AC-5: role=member filtert auf Mitgliedskonten', async () => {
+    const antwort = await (await admin('/api/admin/users?role=member&limit=100')).json()
+
+    expect(antwort.items.length).toBeGreaterThanOrEqual(1)
+    expect(antwort.items.every((konto: { role: string }) => konto.role === 'member')).toBe(true)
+    expect(antwort.total).toBe(antwort.items.length)
+  })
+
+  it('FV-16, AC-5: role=admin filtert auf Verwaltungskonten', async () => {
+    const antwort = await (await admin('/api/admin/users?role=admin&limit=100')).json()
+
+    expect(antwort.items.length).toBeGreaterThanOrEqual(1)
+    expect(antwort.items.every((konto: { role: string }) => konto.role === 'admin')).toBe(true)
+  })
+
+  it('FV-16, AC-5: ein ungültiger role-Wert wird mit 400 abgelehnt', async () => {
+    expect((await admin('/api/admin/users?role=superadmin')).status).toBe(400)
+  })
+
   it('AC-2/AC-12: ein neues Admin-Konto startet mit erzwungenem Passwortwechsel', async () => {
     const { status, konto } = await legeAdminAn('vertretung@test.local')
 

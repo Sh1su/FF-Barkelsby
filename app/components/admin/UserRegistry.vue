@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { createUserSchema } from '#shared/validation/user'
+import { createMemberSchema, createUserSchema } from '#shared/validation/user'
 import { PASSWORD_MIN_LENGTH } from '#shared/constants'
 
 /** Dritter Tab der Verwaltung: Mitglieds- und Admin-Konten pflegen (FV-7, FV-15). */
@@ -15,6 +15,17 @@ const anlegenOffen = ref(false)
 const neuerAdmin = reactive({ email: '', displayName: '', password: '' })
 const anlegenFehler = ref('')
 const busyId = ref('')
+
+// FV-16: Mitgliedskonto anlegen – kein Passwortfeld, das Startpasswort erzeugt der Server.
+const mitgliedAnlegenOffen = ref(false)
+const neuesMitglied = reactive({ email: '', displayName: '' })
+const mitgliedAnlegenFehler = ref('')
+const mitgliedAnlegenBusy = ref(false)
+
+// Zeigt das erzeugte Startpasswort genau einmal – die Antwort der API traegt es nur bei der
+// Anlage selbst, ein zweites Mal ist es nirgends abrufbar (FV-16, AC-2/AC-7).
+const erzeugtesMitglied = ref<{ email: string, password: string } | null>(null)
+const erzeugtesPasswortSichtbar = ref(false)
 
 const passwortDialogFuer = ref<string>('')
 const neuesPasswort = ref('')
@@ -45,6 +56,31 @@ async function anlegen() {
   catch (fehler) {
     anlegenFehler.value = (fehler as { statusMessage?: string }).statusMessage
       ?? 'Das Konto konnte nicht angelegt werden.'
+  }
+}
+
+async function mitgliedAnlegen() {
+  mitgliedAnlegenFehler.value = ''
+  mitgliedAnlegenBusy.value = true
+  try {
+    const konto = await $fetch<{ email: string, generatedPassword?: string }>(
+      '/api/admin/members',
+      { method: 'POST', body: neuesMitglied },
+    )
+    mitgliedAnlegenOffen.value = false
+    Object.assign(neuesMitglied, { email: '', displayName: '' })
+    erzeugtesPasswortSichtbar.value = false
+    // generatedPassword fehlt nur, wenn die Route selbst kein Passwort erzeugt hat – bei
+    // diesem Formular (kein Passwortfeld) ist das nie der Fall.
+    erzeugtesMitglied.value = { email: konto.email, password: konto.generatedPassword! }
+    await refresh()
+  }
+  catch (fehler) {
+    mitgliedAnlegenFehler.value = (fehler as { statusMessage?: string }).statusMessage
+      ?? 'Das Konto konnte nicht angelegt werden.'
+  }
+  finally {
+    mitgliedAnlegenBusy.value = false
   }
 }
 
@@ -101,7 +137,17 @@ async function kennungSpeichern() {
       <!-- min-h-11 = 44px: Mindestgroesse fuer Bedienelemente auf dem Handy (.claude/rules/testing.md) -->
       <UButton
         icon="i-lucide-user-plus"
+        variant="outline"
+        color="neutral"
         class="min-h-11 sm:ml-auto"
+        data-testid="member-new"
+        @click="mitgliedAnlegenFehler = ''; mitgliedAnlegenOffen = true"
+      >
+        Mitglied anlegen
+      </UButton>
+      <UButton
+        icon="i-lucide-user-plus"
+        class="min-h-11"
         data-testid="user-new"
         @click="startpasswortSichtbar = false; anlegenOffen = true"
       >
@@ -362,6 +408,99 @@ async function kennungSpeichern() {
             </UButton>
             <UButton class="min-h-11" data-testid="user-kennung-submit" @click="kennungSpeichern">
               Kennung speichern
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal v-model:open="mitgliedAnlegenOffen" title="Mitglied anlegen">
+      <template #body>
+        <UForm
+          :schema="createMemberSchema"
+          :state="neuesMitglied"
+          class="space-y-4"
+          data-testid="member-create-form"
+          @submit="mitgliedAnlegen"
+        >
+          <UFormField label="Kennung (E-Mail)" name="email" required>
+            <UInput
+              v-model="neuesMitglied.email"
+              type="email"
+              class="w-full"
+              size="lg"
+              :ui="{ base: 'min-h-11' }"
+              data-testid="member-create-email"
+            />
+          </UFormField>
+          <UFormField label="Name" name="displayName" required>
+            <UInput
+              v-model="neuesMitglied.displayName"
+              class="w-full"
+              size="lg"
+              :ui="{ base: 'min-h-11' }"
+              data-testid="member-create-name"
+            />
+          </UFormField>
+
+          <p class="text-xs text-muted">
+            Das Startpasswort erzeugt der Server und zeigt es nach dem Anlegen einmalig an.
+          </p>
+
+          <UAlert v-if="mitgliedAnlegenFehler" color="error" variant="subtle" :title="mitgliedAnlegenFehler" data-testid="member-create-error" />
+
+          <div class="flex justify-end gap-2">
+            <UButton variant="ghost" color="neutral" class="min-h-11" @click="mitgliedAnlegenOffen = false">
+              Abbrechen
+            </UButton>
+            <UButton type="submit" class="min-h-11" :loading="mitgliedAnlegenBusy" data-testid="member-create-submit">
+              Konto anlegen
+            </UButton>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
+
+    <UModal
+      :open="erzeugtesMitglied !== null"
+      title="Zugangsdaten für das neue Mitglied"
+      :dismissible="false"
+      :close="false"
+    >
+      <template #body>
+        <div v-if="erzeugtesMitglied" class="space-y-4">
+          <p class="text-sm text-toned">
+            Diese Zugangsdaten sind jetzt einmalig sichtbar. Bitte dem Mitglied persönlich oder
+            telefonisch mitteilen – hier lässt sich das Passwort danach nicht mehr abrufen.
+          </p>
+          <UFormField label="Kennung (E-Mail)">
+            <UInput :model-value="erzeugtesMitglied.email" readonly class="w-full" size="lg" :ui="{ base: 'min-h-11' }" data-testid="member-generated-email" />
+          </UFormField>
+          <UFormField label="Startpasswort">
+            <UInput
+              :model-value="erzeugtesMitglied.password"
+              readonly
+              :type="erzeugtesPasswortSichtbar ? 'text' : 'password'"
+              class="w-full"
+              size="lg"
+              :ui="{ base: 'min-h-11' }"
+              data-testid="member-generated-password"
+            >
+              <template #trailing>
+                <UButton
+                  variant="link"
+                  color="neutral"
+                  :icon="erzeugtesPasswortSichtbar ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                  :aria-label="erzeugtesPasswortSichtbar ? 'Passwort verbergen' : 'Passwort anzeigen'"
+                  data-testid="member-generated-password-reveal"
+                  @click="erzeugtesPasswortSichtbar = !erzeugtesPasswortSichtbar"
+                />
+              </template>
+            </UInput>
+          </UFormField>
+          <div class="flex justify-end">
+            <UButton class="min-h-11" data-testid="member-generated-close" @click="erzeugtesMitglied = null">
+              Verstanden, Dialog schließen
             </UButton>
           </div>
         </div>

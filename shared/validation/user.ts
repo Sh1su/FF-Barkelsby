@@ -16,6 +16,18 @@ export const createUserSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserSchema>
 
 /**
+ * Mitgliedskonto anlegen (FV-16, AC-1/AC-2). `password` ist bewusst optional – fehlt es, erzeugt
+ * der Server eines (`generatePassword()`). `role` fehlt hier wie bei `createUserSchema` bewusst:
+ * jede Anlegen-Route setzt ihre Rolle serverseitig fest.
+ */
+export const createMemberSchema = z.object({
+  email: kennung,
+  displayName: z.string().trim().min(2, 'Bitte einen Namen angeben.').max(80),
+  password: passwort.optional(),
+})
+export type CreateMemberInput = z.infer<typeof createMemberSchema>
+
+/**
  * Kennung, Passwort oder Zustand aendern. `role` fehlt bewusst – eine Rolle laesst sich
  * nicht ueber den Request umbiegen (.claude/rules/security.md, kein Mass Assignment).
  */

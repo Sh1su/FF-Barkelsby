@@ -1,5 +1,6 @@
 // @vitest-environment nuxt
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { DOMWrapper } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import UserRegistry from '../../app/components/admin/UserRegistry.vue'
 
@@ -45,6 +46,20 @@ const VERTRETUNG = {
 let antwort: () => unknown = () => ({ items: [], total: 0, page: 1, limit: 25 })
 
 registerEndpoint('/api/admin/users', () => antwort())
+
+registerEndpoint('/api/admin/members', {
+  method: 'POST',
+  handler: () => ({
+    id: 'mitglied-2',
+    email: 'neu@test.local',
+    role: 'member',
+    displayName: 'Neu Angelegt',
+    mustChangePassword: true,
+    active: true,
+    createdAt: '2026-09-12T00:00:00.000Z',
+    generatedPassword: 'erzeugtes-startpasswort-123',
+  }),
+})
 
 mockNuxtImport('useUserSession', () => () => ({
   user: ref({ id: ADMIN.id, email: ADMIN.email, role: 'admin', displayName: ADMIN.displayName }),
@@ -154,6 +169,51 @@ describe('FV-7 Benutzerverwaltung – Kontenliste', () => {
     expect(document.querySelector('[data-testid="user-create-name"]')).not.toBeNull()
     expect(document.querySelector('[data-testid="user-create-password"]')?.getAttribute('type'))
       .toBe('password')
+  })
+
+  it('FV-16, AC-6: der Mitglied-anlegen-Dialog fragt nur Kennung und Name ab', async () => {
+    const component = await mountSuspended(UserRegistry)
+
+    await component.find('[data-testid="member-new"]').trigger('click')
+    await nextTick()
+
+    expect(document.querySelector('[data-testid="member-create-email"]')).not.toBeNull()
+    expect(document.querySelector('[data-testid="member-create-name"]')).not.toBeNull()
+    expect(document.querySelector('[data-testid="member-create-password"]')).toBeNull()
+  })
+
+  it('FV-16, AC-7: nach dem Anlegen erscheint das erzeugte Startpasswort einmalig', async () => {
+    const component = await mountSuspended(UserRegistry)
+
+    // Der Dialog wird per Teleport ausserhalb des Komponenten-Wrappers gerendert – deshalb
+    // ueber `document.querySelector` + `DOMWrapper` statt `component.find()` (das nur im
+    // eigenen Render-Baum sucht, siehe bereits bestehende Pruefungen in dieser Datei).
+    await component.find('[data-testid="member-new"]').trigger('click')
+    await nextTick()
+    await new DOMWrapper(document.querySelector('[data-testid="member-create-email"]')!).setValue('neu@test.local')
+    await new DOMWrapper(document.querySelector('[data-testid="member-create-name"]')!).setValue('Neu Angelegt')
+    await new DOMWrapper(document.querySelector('[data-testid="member-create-form"]')!).trigger('submit')
+
+    // Der Request laeuft ueber einen echten (gemockten) Nitro-Endpunkt – ein einfaches
+    // `flushPromises()` reicht fuer den Netzwerk-Roundtrip nicht, deshalb pollen statt warten.
+    await vi.waitFor(() => {
+      if (!document.querySelector('[data-testid="member-generated-password"]')) throw new Error('noch nicht da')
+    })
+
+    const passwortfeld = document.querySelector('[data-testid="member-generated-password"]')
+    expect(passwortfeld?.getAttribute('type')).toBe('password')
+    expect(document.querySelector('[data-testid="member-generated-email"]')).not.toBeNull()
+
+    const schalter = document.querySelector('[data-testid="member-generated-password-reveal"]') as HTMLElement
+    schalter.click()
+    await nextTick()
+    expect(document.querySelector('[data-testid="member-generated-password"]')?.getAttribute('type')).toBe('text')
+
+    // Erst der Bestaetigen-Klick schliesst den Dialog – er ist bewusst nicht wegklickbar.
+    const schliessen = document.querySelector('[data-testid="member-generated-close"]') as HTMLElement
+    schliessen.click()
+    await nextTick()
+    expect(document.querySelector('[data-testid="member-generated-password"]')).toBeNull()
   })
 })
 

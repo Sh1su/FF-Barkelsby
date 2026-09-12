@@ -22,6 +22,17 @@ export async function createPasswordHash(password: string): Promise<string> {
   return `scrypt$${salt.toString('hex')}$${derived.toString('hex')}`
 }
 
+/**
+ * Zufaelliges Startpasswort fuer neu angelegte Mitgliedskonten (FV-16, AC-2).
+ *
+ * base64url statt eines Zeichensatzes mit Sonderzeichen: laesst sich anstandslos abtippen oder
+ * kopieren, ohne dass Verwechslungsgefahr (0/O, l/1) oder Escaping-Probleme entstehen. 20 Byte
+ * Zufall ergeben 27 Zeichen – deutlich ueber `PASSWORD_MIN_LENGTH`.
+ */
+export function generatePassword(byteLength = 20): string {
+  return randomBytes(byteLength).toString('base64url')
+}
+
 /** Prueft ein Passwort gegen einen Hash. Gibt bei kaputtem Hash `false` zurueck, wirft nie. */
 export async function verifyPasswordHash(hash: string, password: string): Promise<boolean> {
   const [algorithm, saltHex, keyHex] = hash.split('$')
