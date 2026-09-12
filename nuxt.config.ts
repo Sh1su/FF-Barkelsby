@@ -35,6 +35,7 @@ const usedIconNames = [
   'external-link',
   'eye',
   'eye-off',
+  'grid-3x3',
   'hourglass',
   'layers',
   'log-out',
