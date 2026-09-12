@@ -31,8 +31,8 @@
 | FV-14 | Plätze entfernen & Zeitraum-Kalender | Approved | [FV-14-plaetze-entfernen.md](FV-14-plaetze-entfernen.md) | 2026-09-01 |
 | FV-15 | PRD-Revision & persönliche Mitgliedskonten | Approved | [FV-15-mitgliedskonten.md](FV-15-mitgliedskonten.md) | 2026-09-11 |
 | FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Approved | [FV-16-mitgliedskonten-anlegen.md](FV-16-mitgliedskonten-anlegen.md) | 2026-09-12 |
-| FV-17 | Lehrgangs-Voraussetzungen | Roadmap | – | – |
-| FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Roadmap | – | – |
+| FV-17 | Lehrgangs-Voraussetzungen | Planned | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
+| FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Planned | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
 | FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Roadmap | – | – |
 | FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Roadmap | – | – |
 
