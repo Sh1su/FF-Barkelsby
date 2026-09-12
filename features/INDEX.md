@@ -30,7 +30,7 @@
 | FV-13 | Lehrgangsfelder reduzieren | Approved | [FV-13-lehrgangsfelder-reduzieren.md](FV-13-lehrgangsfelder-reduzieren.md) | 2026-08-31 |
 | FV-14 | Plätze entfernen & Zeitraum-Kalender | Approved | [FV-14-plaetze-entfernen.md](FV-14-plaetze-entfernen.md) | 2026-09-01 |
 | FV-15 | PRD-Revision & persönliche Mitgliedskonten | Approved | [FV-15-mitgliedskonten.md](FV-15-mitgliedskonten.md) | 2026-09-11 |
-| FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Roadmap | – | – |
+| FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Approved | [FV-16-mitgliedskonten-anlegen.md](FV-16-mitgliedskonten-anlegen.md) | 2026-09-12 |
 | FV-17 | Lehrgangs-Voraussetzungen | Roadmap | – | – |
 | FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Roadmap | – | – |
 | FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Roadmap | – | – |
@@ -98,8 +98,21 @@ verworfene Entwurf vom 2026-08-10 bleibt davon unberührt als Historie stehen). 
 grün: 350 Vitest-Tests, keine Abdeckungslücken. Abweichung von der ursprünglichen Spec: das
 vormalige geteilte Gast-Konto wird nicht deaktiviert, sondern zu einem gewöhnlichen
 Mitgliedskonto – Details in `FV-15-mitgliedskonten.md`. FV-7s AC-7 ist damit historisch (Hinweis
-in dessen Spec ergänzt). FV-16 bis FV-20 (Mitgliedskonten anlegen, Voraussetzungen,
-Abschluss-Tracking, Matrix, Katalog-Filter) sind noch nicht begonnen.
+in dessen Spec ergänzt).
+
+FV-16 (Mitgliedskonten anlegen & Zugangsdaten verteilen) ist implementiert: neue Route
+`POST /api/admin/members` legt ein Mitgliedskonto an (Rolle serverseitig fest, kein
+Request-Body-Feld dafür auf dieser oder der Admin-Route), ohne eigenes Passwort erzeugt der
+Server eines und gibt es einmalig in der Antwort zurück (`generatePassword()` in
+`server/utils/password.ts`); `GET /api/admin/users` filtert optional per `role`-Query-Parameter.
+Dritter Verwaltungstab hat einen zweiten Button „Mitglied anlegen" (nur Kennung + Name) und zeigt
+das erzeugte Startpasswort danach einmalig in einem nicht wegklickbaren Dialog. Keine Abweichung
+von der ursprünglichen Spec. `npm run verify` grün: 366 Vitest-Tests (davon neu
+`tests/api/admin.members.spec.ts`), `npm run test:e2e` grün: 40 Playwright-Tests, keine
+Abdeckungslücken.
+
+FV-17 bis FV-20 (Voraussetzungen, Abschluss-Tracking, Matrix, Katalog-Filter) sind noch nicht
+begonnen.
 
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,

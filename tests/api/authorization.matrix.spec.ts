@@ -244,6 +244,18 @@ const MATRIX: MatrixEntry[] = [
     admin: 404,
   },
   {
+    method: 'POST',
+    route: '/api/admin/members',
+    path: () => '/api/admin/members',
+    body: () => ({
+      email: 'matrix-mitglied@test.local',
+      displayName: 'Matrix Mitglied',
+    }),
+    anonymous: 401,
+    member: 403,
+    admin: 201,
+  },
+  {
     method: 'GET',
     route: '/api/admin/cover-preview.svg',
     path: () => '/api/admin/cover-preview.svg?motif=1&palette=2',

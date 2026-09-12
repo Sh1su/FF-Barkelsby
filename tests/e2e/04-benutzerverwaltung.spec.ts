@@ -54,4 +54,26 @@ test.describe.serial('FV-7 Benutzerverwaltung', () => {
 
     await expect(page).not.toHaveURL(/\/passwort-aendern/)
   })
+
+  test('FV-16, AC-6/AC-7: ein Mitglied anlegen zeigt das erzeugte Passwort einmalig', async ({ page }) => {
+    await benutzerTab(page)
+
+    await page.getByTestId('member-new').click()
+    await fillStable(page.getByTestId('member-create-email'), 'neues-mitglied-e2e@e2e.local')
+    await fillStable(page.getByTestId('member-create-name'), 'Neues Mitglied E2E')
+    await page.getByTestId('member-create-submit').click()
+
+    await expect(page.getByTestId('member-generated-email')).toHaveValue('neues-mitglied-e2e@e2e.local')
+    const passwortfeld = page.getByTestId('member-generated-password')
+    await expect(passwortfeld).toHaveAttribute('type', 'password')
+    const passwort = await passwortfeld.inputValue()
+    expect(passwort.length).toBeGreaterThanOrEqual(12)
+
+    await page.getByTestId('member-generated-close').click()
+    await expect(passwortfeld).toHaveCount(0)
+
+    // Das erzeugte Konto ist tatsaechlich ein Mitgliedskonto und in der Liste sichtbar.
+    const neueZeile = page.getByTestId('user-row').filter({ hasText: 'neues-mitglied-e2e@e2e.local' })
+    await expect(neueZeile).toContainText('Mitglied')
+  })
 })
