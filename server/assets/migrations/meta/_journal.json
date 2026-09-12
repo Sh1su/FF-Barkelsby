@@ -57,6 +57,13 @@
       "when": 1789163949403,
       "tag": "0007_strange_franklin_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1789194284703,
+      "tag": "0008_cloudy_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

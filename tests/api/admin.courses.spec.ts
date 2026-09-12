@@ -241,6 +241,23 @@ describe('FV-3 Admin-Kalender – Absagen und Löschen', () => {
     expect((await admin(`/api/admin/courses/${course.id}`, { method: 'DELETE' })).status).toBe(409)
   })
 
+  it('FV-17, AC-8: verweigert das Löschen, wenn der Lehrgang Voraussetzung für einen anderen ist', async () => {
+    const required = await createCourse(adminCookie, { title: 'Voraussetzung für AC-8' })
+    const course = await createCourse(adminCookie, { title: 'Verlangt die Voraussetzung' })
+
+    await admin(`/api/admin/courses/${course.id}/prerequisites`, {
+      method: 'PUT',
+      body: JSON.stringify({ requiredCourseIds: [required.id] }),
+    })
+
+    const response = await admin(`/api/admin/courses/${required.id}`, { method: 'DELETE' })
+    expect(response.status).toBe(409)
+
+    // Der abhängige Lehrgang selbst bleibt löschbar – nur die Voraussetzung ist geschützt.
+    expect((await admin(`/api/admin/courses/${course.id}`, { method: 'DELETE' })).status).toBe(200)
+    expect((await admin(`/api/admin/courses/${required.id}`, { method: 'DELETE' })).status).toBe(200)
+  })
+
   it('FV-14, AC-1: eine mitgeschickte Platzzahl beim Bearbeiten wird ignoriert', async () => {
     const course = await createCourse(adminCookie)
 

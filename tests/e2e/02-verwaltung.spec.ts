@@ -183,3 +183,42 @@ test.describe.serial('FV-3 Verwaltung – Lehrgang anlegen und absagen', () => {
       .toHaveCount(0)
   })
 })
+
+test.describe.serial('FV-17 Lehrgangs-Voraussetzungen – Mehrfachauswahl', () => {
+  test('AC-9: legt eine Voraussetzung über das Mehrfachauswahlfeld fest', async ({ page }) => {
+    await login(page, ADMIN.email, ADMIN.password)
+
+    const cookie = (await page.context().cookies())
+      .map(eintrag => `${eintrag.name}=${eintrag.value}`)
+      .join('; ')
+
+    const required = await (await page.request.post('/api/admin/courses', {
+      headers: { cookie },
+      data: { title: 'E2E Grundlagenlehrgang', startsOn: isoInDays(70), endsOn: isoInDays(70) },
+    })).json()
+    const course = await (await page.request.post('/api/admin/courses', {
+      headers: { cookie },
+      data: { title: 'E2E Aufbaulehrgang', startsOn: isoInDays(80), endsOn: isoInDays(80) },
+    })).json()
+
+    await page.goto(`/verwaltung/lehrgang/${course.id}`)
+    await expect(page.getByTestId('prerequisites-select')).toBeVisible()
+
+    await page.getByTestId('prerequisites-select').click()
+    await page.getByRole('option', { name: 'E2E Grundlagenlehrgang' }).click()
+    // Menü schließen, sonst verdeckt es den Speichern-Button.
+    await page.keyboard.press('Escape')
+
+    await page.getByTestId('prerequisites-save').click()
+
+    // Neu laden bestätigt, dass die Voraussetzung serverseitig ankam (AC-3 – eigener
+    // Speichervorgang, getrennt von den übrigen Feldern).
+    await page.reload()
+    await expect(page.getByTestId('prerequisites-select')).toContainText('E2E Grundlagenlehrgang')
+
+    const gespeichert = await (
+      await page.request.get(`/api/admin/courses/${course.id}/prerequisites`, { headers: { cookie } })
+    ).json()
+    expect(gespeichert.items).toEqual([{ id: required.id, title: 'E2E Grundlagenlehrgang' }])
+  })
+})
