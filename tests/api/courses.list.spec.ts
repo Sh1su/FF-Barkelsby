@@ -8,10 +8,17 @@ await startTestServer('courses-list')
 
 let memberCookie: string
 let adminCookie: string
+let memberId: string
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.1.1')
   memberCookie = await signIn('member', '127.0.1.2')
+
+  // Ein verschachteltes `beforeAll` innerhalb eines `describe`-Blocks findet den
+  // Test-Utils-Kontext nicht (`useTestContext`: "No context is available") – deshalb wird
+  // `memberId` hier im obersten `beforeAll` mitgeladen, wie im Rest der Datei ueblich.
+  const session = await (await fetch('/api/_auth/session', { headers: { cookie: memberCookie } })).json()
+  memberId = session.user.id
 
   await createCourse(adminCookie, {
     title: 'Truppmann Grundausbildung',
@@ -111,5 +118,85 @@ describe('FV-2 Lehrgangskatalog – Übersicht', () => {
     expect(data.items[0]).not.toHaveProperty('capacity')
     expect(data.items[0]).not.toHaveProperty('fullyBooked')
     expect(data.items[0]).not.toHaveProperty('freeSeats')
+  })
+})
+
+describe('FV-20 Voraussetzungs-Engine & Katalog-Sichtbarkeit – Katalog-Filter', () => {
+  function putPrerequisites(courseId: string, requiredCourseIds: string[]) {
+    return fetch(`/api/admin/courses/${courseId}/prerequisites`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ requiredCourseIds }),
+      redirect: 'manual',
+    })
+  }
+
+  function trageAbschlussEin(courseId: string, userId: string = memberId) {
+    return fetch(`/api/admin/courses/${courseId}/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ userId }),
+      redirect: 'manual',
+    })
+  }
+
+  function ids(data: { items: { id: string }[] }) {
+    return data.items.map(item => item.id)
+  }
+
+  it('AC-3: ein Lehrgang mit unerfüllter Voraussetzung erscheint für ein Mitglied nicht in der Liste', async () => {
+    const required = await createCourse(adminCookie, { title: 'FV-20 Liste Voraussetzung' })
+    const course = await createCourse(adminCookie, { title: 'FV-20 Liste Gesperrt' })
+    await putPrerequisites(course.id, [required.id])
+
+    const data = await (await list(`?q=${encodeURIComponent(course.title)}`)).json()
+    expect(ids(data)).not.toContain(course.id)
+  })
+
+  it('AC-3: nach Abschluss der Voraussetzung erscheint der Lehrgang für dasselbe Mitglied wieder', async () => {
+    const required = await createCourse(adminCookie, { title: 'FV-20 Liste Voraussetzung Frei' })
+    const course = await createCourse(adminCookie, { title: 'FV-20 Liste Freigeschaltet' })
+    await putPrerequisites(course.id, [required.id])
+    await trageAbschlussEin(required.id)
+
+    const data = await (await list(`?q=${encodeURIComponent(course.title)}`)).json()
+    expect(ids(data)).toContain(course.id)
+  })
+
+  it('AC-4: ein Admin sieht denselben Lehrgang trotz unerfüllter Voraussetzung unverändert', async () => {
+    const required = await createCourse(adminCookie, { title: 'FV-20 Liste Voraussetzung Admin' })
+    const course = await createCourse(adminCookie, { title: 'FV-20 Liste Admin Sieht Alles' })
+    await putPrerequisites(course.id, [required.id])
+
+    const data = await (await list(`?q=${encodeURIComponent(course.title)}`, adminCookie)).json()
+    expect(ids(data)).toContain(course.id)
+  })
+
+  it('AC-6: ein Lehrgang ohne jede Voraussetzung bleibt für jedes Mitglied sichtbar (Regressionsschutz)', async () => {
+    const course = await createCourse(adminCookie, { title: 'FV-20 Liste Ohne Voraussetzung' })
+
+    const data = await (await list(`?q=${encodeURIComponent(course.title)}`)).json()
+    expect(ids(data)).toContain(course.id)
+  })
+
+  it('AC-7: filtert mehrere Lehrgänge in einem Aufruf korrekt (Batch statt einer Abfrage je Lehrgang)', async () => {
+    const reqA = await createCourse(adminCookie, { title: 'FV-20 Batch Voraussetzung Eins' })
+    const reqB = await createCourse(adminCookie, { title: 'FV-20 Batch Voraussetzung Zwei' })
+    const gesperrt = await createCourse(adminCookie, { title: 'FV-20 Batch Gesperrt' })
+    const frei = await createCourse(adminCookie, { title: 'FV-20 Batch Frei' })
+    const ohneVoraussetzung = await createCourse(adminCookie, { title: 'FV-20 Batch Ohne Voraussetzung' })
+
+    await putPrerequisites(gesperrt.id, [reqA.id])
+    await putPrerequisites(frei.id, [reqB.id])
+    await trageAbschlussEin(reqB.id)
+
+    const data = await (await list(`?q=${encodeURIComponent('FV-20 Batch')}`)).json()
+    const sichtbar = ids(data)
+
+    expect(sichtbar).toContain(reqA.id)
+    expect(sichtbar).toContain(reqB.id)
+    expect(sichtbar).toContain(frei.id)
+    expect(sichtbar).toContain(ohneVoraussetzung.id)
+    expect(sichtbar).not.toContain(gesperrt.id)
   })
 })

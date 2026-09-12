@@ -151,15 +151,27 @@ describe('FV-17 Lehrgangs-Voraussetzungen – Pflege', () => {
     expect(data.items).toEqual([])
   })
 
-  it('AC-7: der öffentliche Katalog bleibt unverändert – Voraussetzungen filtern nichts', async () => {
+  // AC-7 (Wortlaut zum Zeitpunkt von FV-17): „der öffentliche Katalog bleibt unverändert –
+  // Voraussetzungen filtern nichts". Das galt, solange FV-20 nicht existierte (siehe Tech
+  // Design/Nicht-Teil-dieser-Spec dort). FV-20 wertet Voraussetzungen jetzt aus und blendet
+  // einen Lehrgang für ein Mitglied ohne erfüllte Voraussetzung aus – siehe
+  // `features/FV-20-katalog-sichtbarkeit.md`, Abschnitt „Abweichung von der ursprünglichen
+  // Spec". Was von AC-7 unveraendert bleibt: das reine *Setzen* einer Voraussetzung
+  // (dieser PUT-Endpunkt) loest selbst keine Filterung aus und der Admin-Katalog bleibt
+  // ungefiltert – die Sichtbarkeitsauswertung sitzt vollstaendig in FV-20s eigenem Service.
+  it('AC-7: das Setzen einer Voraussetzung filtert den Katalog nicht selbst – die Sichtbarkeitsauswertung sitzt in FV-20', async () => {
     const required = await createCourse(adminCookie, { title: 'Nötige Voraussetzung' })
     const course = await createCourse(adminCookie, { title: 'Sichtbar trotz Voraussetzung' })
     await putPrerequisites(course.id, [required.id])
 
-    const list = await (
+    const adminList = await (
+      await fetch(`/api/courses?q=${encodeURIComponent(course.title)}`, { headers: { cookie: adminCookie } })
+    ).json()
+    expect(adminList.items.map((item: { id: string }) => item.id)).toContain(course.id)
+
+    const memberList = await (
       await fetch(`/api/courses?q=${encodeURIComponent(course.title)}`, { headers: { cookie: memberCookie } })
     ).json()
-
-    expect(list.items.map((item: { id: string }) => item.id)).toContain(course.id)
+    expect(memberList.items.map((item: { id: string }) => item.id)).not.toContain(course.id)
   })
 })
