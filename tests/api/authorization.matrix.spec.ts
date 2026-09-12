@@ -312,6 +312,14 @@ const MATRIX: MatrixEntry[] = [
   },
   {
     method: 'GET',
+    route: '/api/admin/matrix',
+    path: () => '/api/admin/matrix',
+    anonymous: 401,
+    member: 403,
+    admin: 200,
+  },
+  {
+    method: 'GET',
     route: '/api/admin/cover-preview.svg',
     path: () => '/api/admin/cover-preview.svg?motif=1&palette=2',
     anonymous: 401,

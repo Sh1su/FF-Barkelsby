@@ -33,7 +33,7 @@
 | FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Approved | [FV-16-mitgliedskonten-anlegen.md](FV-16-mitgliedskonten-anlegen.md) | 2026-09-12 |
 | FV-17 | Lehrgangs-Voraussetzungen | Approved | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
 | FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Approved | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
-| FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Planned | [FV-19-admin-matrix.md](FV-19-admin-matrix.md) | 2026-09-12 |
+| FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Approved | [FV-19-admin-matrix.md](FV-19-admin-matrix.md) | 2026-09-12 |
 | FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Planned | [FV-20-katalog-sichtbarkeit.md](FV-20-katalog-sichtbarkeit.md) | 2026-09-12 |
 
 <!-- Add features above this line -->
@@ -145,6 +145,22 @@ jeweils auf Basis des Integrationsstands aus `integration/fv17-fv18` (Branch, in
 FV-18 zusammengeführt wurden, `npm run verify`/`npm run test:e2e` dort grün). FV-19 wurde bewusst
 auf reine Abschluss-Anzeige verkleinert (keine Berechtigungs-Spalte), damit es nicht auf FV-20
 warten muss – Details in `FV-19-admin-matrix.md`.
+
+FV-19 (Admin-Matrix) ist implementiert: neuer, rein lesender `server/services/matrix.service.ts`
+(`getMatrix()`, keine Schema-Änderung), neue Route `GET /api/admin/matrix` und ein vierter
+Verwaltungstab „Matrix" (`app/components/admin/CompletionMatrix.vue`) zwischen
+Benutzerverwaltung und Einstellungen. Die Tabelle zeigt Mitglieder x Lehrgänge mit dem
+Abschluss-Status aus FV-18; ein Zellen-Klick trägt einen Abschluss ein bzw. entfernt ihn direkt
+über die bestehenden FV-18-Routen, ohne die Matrix neu zu laden. Deaktivierte Mitgliedskonten
+bleiben sichtbar, aber optisch markiert. Bewusst **keine** Berechtigungs-/Voraussetzungs-Auswertung
+(bleibt FV-20 vorbehalten, siehe Scope-Entscheidung in der Spec). Kleiner technischer Fund dabei:
+das neue Tab-Icon fehlte in der expliziten Icon-Bundle-Liste in `nuxt.config.ts` und blieb sonst im
+SSR-Rendering leer – ergänzt. `npm run verify` grün bis auf den bereits bekannten, nicht FV-19
+zuzurechnenden Fund: FV-20s Spec existiert bereits ohne Implementierung (paralleler Branch), daher
+schlägt `check:gaps` insgesamt mit sieben offenen FV-20-Kriterien fehl (dasselbe Muster wie zuvor
+FV-17 während FV-18, siehe dortiger Absatz). `npm run test:e2e` grün: 45 Playwright-Tests (neu:
+`tests/e2e/05-matrix.spec.ts`). Keine inhaltliche Abweichung von einer Acceptance Criterion (Details
+und die Diskussion der Datenform in `FV-19-admin-matrix.md`).
 
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,
