@@ -32,7 +32,7 @@
 | FV-15 | PRD-Revision & persönliche Mitgliedskonten | Approved | [FV-15-mitgliedskonten.md](FV-15-mitgliedskonten.md) | 2026-09-11 |
 | FV-16 | Mitgliedskonten anlegen & Zugangsdaten verteilen | Approved | [FV-16-mitgliedskonten-anlegen.md](FV-16-mitgliedskonten-anlegen.md) | 2026-09-12 |
 | FV-17 | Lehrgangs-Voraussetzungen | Approved | [FV-17-lehrgangs-voraussetzungen.md](FV-17-lehrgangs-voraussetzungen.md) | 2026-09-12 |
-| FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Planned | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
+| FV-18 | Teilnahme-Erfassung (Abschluss-Historie) | Approved | [FV-18-abschluss-erfassung.md](FV-18-abschluss-erfassung.md) | 2026-09-12 |
 | FV-19 | Admin-Matrix (Lehrgänge × Mitglieder) | Roadmap | – | – |
 | FV-20 | Voraussetzungs-Engine & Katalog-Sichtbarkeit | Roadmap | – | – |
 
@@ -112,21 +112,35 @@ von der ursprünglichen Spec. `npm run verify` grün: 366 Vitest-Tests (davon ne
 Abdeckungslücken.
 
 FV-17 (Lehrgangs-Voraussetzungen) ist implementiert: neue Tabelle `course_prerequisites`
-(Migration `0008_cloudy_squirrel_girl.sql`, reine `CREATE TABLE`), `PUT`/`GET
-/api/admin/courses/:id/prerequisites` pflegen bzw. lesen die Voraussetzungsmenge eines
-Lehrgangs, Zyklen (auch über mehrere Stationen) werden per Reachability-Suche vor dem Speichern
-abgelehnt (422), `deleteCourse` verweigert das Löschen eines Lehrgangs, der Voraussetzung für
-einen anderen ist (409). Die Bearbeitungsseite eines Lehrgangs hat ein
-Mehrfachauswahlfeld mit eigenem Speichervorgang. Keine inhaltliche Abweichung von einer
-Acceptance Criterion. `npm run verify`s Einzelschritte (Lint, Typecheck, 388 Vitest-Tests,
-`check:gaps` für FV-17 selbst) sind grün, `npm run test:e2e` ebenfalls; der zusammengesetzte
-`npm run verify`-Befehl endet dennoch mit Exit-Code 1, weil `check:gaps` für das parallel in
-einem eigenen Branch/Worktree in Arbeit befindliche **FV-18** (dessen Spec bereits im
-Basis-Commit dieses Branches steht) fehlende Tests meldet – ein vorbestehender Zustand,
-unabhängig von FV-17, der sich mit dessen Merge auflöst. Details in
-`FV-17-lehrgangs-voraussetzungen.md`.
+(reine `CREATE TABLE`), `PUT`/`GET /api/admin/courses/:id/prerequisites` pflegen bzw. lesen die
+Voraussetzungsmenge eines Lehrgangs, Zyklen (auch über mehrere Stationen) werden per
+Reachability-Suche vor dem Speichern abgelehnt (422), `deleteCourse` verweigert das Löschen eines
+Lehrgangs, der Voraussetzung für einen anderen ist (409). Die Bearbeitungsseite eines Lehrgangs
+hat ein Mehrfachauswahlfeld mit eigenem Speichervorgang. Keine inhaltliche Abweichung von einer
+Acceptance Criterion.
 
-FV-18 bis FV-20 (Abschluss-Tracking, Matrix, Katalog-Filter) sind noch nicht begonnen.
+FV-18 (Teilnahme-Erfassung / Abschluss-Historie) ist implementiert: neue Tabelle
+`course_completions` (additiv, kein Rebuild), neuer Service
+`server/services/course-completion.service.ts` und drei neue Routen unter
+`/api/admin/courses/:id/completions` (`GET`, `POST`, `DELETE /:userId`), alle nur für Admins.
+`deleteCourse` lehnt das Löschen jetzt zusätzlich ab, wenn Abschlüsse existieren (permanenter
+Ausbildungsnachweis). Bewusst backend-only – die Bedienoberfläche kommt erst mit FV-19s
+Admin-Matrix. Kleine Abweichung von der ursprünglichen Spec: die Existenzprüfung des Lehrgangs ist
+in `course-completion.service.ts` lokal dupliziert statt aus `course-admin.service.ts`
+wiederverwendet, um einen Zirkelbezug zu vermeiden (Details in der FV-18-Spec).
+
+FV-17 und FV-18 wurden parallel in getrennten Branches/Worktrees entwickelt und beide gegen
+`feat/FV-16-mitgliedskonten-anlegen` als PR geöffnet (#38 bzw. #37) – jeder für sich mit grünem
+`npm run verify`. Beim Zusammenführen in `integration/fv17-fv18` kollidierten beide
+Migrationsnummern (beide erzeugten unabhängig voneinander eine `0008_...sql`) sowie `schema.ts`,
+`course-admin.service.ts` (`deleteCourse`), `tests/api/admin.courses.spec.ts` und
+`tests/api/authorization.matrix.spec.ts` – alles rein additive Konflikte (beide Seiten behalten),
+die Migration wurde einmalig neu generiert statt die beiden `0008`-Dateien von Hand zu verzahnen.
+Dieselbe Kollision entsteht erneut, wenn #37/#38 später einzeln nach `main` gemergt werden – dann
+mit demselben Vorgehen auflösen: Schema-Änderungen beider Seiten behalten, betroffene
+`0008`-Migrationsdatei(en) löschen und `npm run db:generate` neu laufen lassen.
+
+FV-19 und FV-20 (Matrix, Katalog-Filter) sind noch nicht begonnen.
 
 ## Historie
 Die ursprünglichen Feature-IDs FV-1 bis FV-12 (Enterprise-Fortbildungsverwaltung mit Rollen,

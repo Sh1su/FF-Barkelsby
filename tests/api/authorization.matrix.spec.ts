@@ -28,6 +28,8 @@ let adminCookie: string
 let courseId = 'platzhalter'
 let editableCourseId = 'platzhalter'
 let deletableCourseId = 'platzhalter'
+let completionCourseId = 'platzhalter'
+let completionMemberId = 'platzhalter'
 
 beforeAll(async () => {
   adminCookie = await signIn('admin', '127.0.5.1')
@@ -35,6 +37,15 @@ beforeAll(async () => {
   courseId = (await createCourse(adminCookie, { title: 'Matrix Lehrgang' })).id
   editableCourseId = (await createCourse(adminCookie, { title: 'Matrix bearbeitbar' })).id
   deletableCourseId = (await createCourse(adminCookie, { title: 'Matrix löschbar' })).id
+  completionCourseId = (await createCourse(adminCookie, { title: 'Matrix Abschluss' })).id
+
+  const mitgliedResponse = await fetch('/api/admin/members', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie: adminCookie },
+    body: JSON.stringify({ email: 'matrix-abschluss-mitglied@test.local', displayName: 'Matrix Abschluss Mitglied' }),
+    redirect: 'manual',
+  })
+  completionMemberId = (await mitgliedResponse.json()).id
 })
 
 const MATRIX: MatrixEntry[] = [
@@ -268,6 +279,33 @@ const MATRIX: MatrixEntry[] = [
     route: '/api/admin/courses/[id]/prerequisites',
     path: () => `/api/admin/courses/${courseId}/prerequisites`,
     body: () => ({ requiredCourseIds: [] }),
+    anonymous: 401,
+    member: 403,
+    admin: 200,
+  },
+  {
+    method: 'GET',
+    route: '/api/admin/courses/[id]/completions',
+    path: () => `/api/admin/courses/${completionCourseId}/completions`,
+    anonymous: 401,
+    member: 403,
+    admin: 200,
+  },
+  {
+    method: 'POST',
+    route: '/api/admin/courses/[id]/completions',
+    path: () => `/api/admin/courses/${completionCourseId}/completions`,
+    body: () => ({ userId: completionMemberId }),
+    anonymous: 401,
+    member: 403,
+    // Beim Admin-Durchlauf existiert noch kein Abschluss fuer dieses Paar, deshalb 201; der
+    // anschliessende DELETE-Eintrag (selber Durchlauf, spaeter in der Matrix) entfernt ihn wieder.
+    admin: 201,
+  },
+  {
+    method: 'DELETE',
+    route: '/api/admin/courses/[id]/completions/[userId]',
+    path: () => `/api/admin/courses/${completionCourseId}/completions/${completionMemberId}`,
     anonymous: 401,
     member: 403,
     admin: 200,

@@ -20,7 +20,7 @@ export const coverQuerySchema = z.object({
  * Schnellanlage im Kalender (FV-3, AC-5). Enthaelt bewusst nur die Felder des Designs.
  * `status`, Zeitstempel und Belegung kommen niemals aus dem Request-Body.
  */
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Bitte ein Datum im Format JJJJ-MM-TT.')
+export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Bitte ein Datum im Format JJJJ-MM-TT.')
 
 export const createCourseSchema = z
   .object({
